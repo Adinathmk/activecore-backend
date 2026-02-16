@@ -1,4 +1,5 @@
 from pathlib import Path
+from datetime import timedelta
 import environ
 
 # Base Directory
@@ -28,7 +29,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
 
-    'rest_framework',
+    'drf_spectacular',
+    "rest_framework",
+    "rest_framework.authtoken",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
 
 
     'apps.accounts.apps.AccountsConfig',
@@ -90,7 +95,37 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 #Rest framework
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "apps.accounts.authentication.CookieJWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+
+    "UPDATE_LAST_LOGIN": True,
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "My Project API",
+    "DESCRIPTION": "API documentation for my backend",
+    "VERSION": "1.0.0",
+
+    # Swagger UI behavior
+    "SERVE_INCLUDE_SCHEMA": False,
+
+    # Enable JWT (Bearer) auth in Swagger
+    "SECURITY": [{"BearerAuth": []}],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
