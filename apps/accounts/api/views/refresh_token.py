@@ -6,7 +6,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
-from apps.accounts.serializers.CookieRefreshSerializer import CookieRefreshSerializer
+from apps.accounts.api.serializers.CookieRefreshSerializer import CookieRefreshSerializer
 
 User = get_user_model()
 

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
-from apps.accounts.serializers.register_serializer import RegisterSerializer
+from apps.accounts.api.serializers.register_serializer import RegisterSerializer
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
