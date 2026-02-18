@@ -6,7 +6,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from drf_spectacular.utils import extend_schema
-from apps.accounts.api.serializers.CookieRefreshSerializer import CookieRefreshSerializer
+from apps.accounts.api.serializers.cookie_refresh_serializer import CookieRefreshSerializer
 
 User = get_user_model()
 
@@ -44,9 +44,13 @@ class RefreshView(APIView):
 
             user = User.objects.get(id=user_id)
 
+            # 🔥 THIS IS WHAT YOU MISSED
+            old_refresh.blacklist()
+
             # ✅ CORRECT rotation
             new_refresh = RefreshToken.for_user(user)
 
+        
         except (TokenError, User.DoesNotExist):
             response = Response(
                 {"detail": "Invalid or expired refresh token"},

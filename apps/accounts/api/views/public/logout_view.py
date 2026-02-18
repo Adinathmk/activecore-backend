@@ -3,9 +3,16 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.conf import settings
+from drf_spectacular.utils import extend_schema
 
 class LogoutView(APIView):
     permission_classes = [AllowAny]
+
+    @extend_schema(
+        tags=["auth"],
+        summary="Logout user",
+        responses={200: dict},
+    )
 
     def post(self, request):
         refresh_token = request.COOKIES.get("refresh")

@@ -252,3 +252,15 @@ class ProductRating(models.Model):
 
     class Meta:
         unique_together = ("product", "user")  
+
+
+
+# Category
+# ProductType
+# Product
+# ProductFeature
+# ProductImage
+# ProductVariant
+# Inventory
+# ProductMetrics
+# ProductRating

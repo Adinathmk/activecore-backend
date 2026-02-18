@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 from apps.products.models import Product
-from apps.products.api.serializers.ProductDetailSerializer import ProductDetailSerializer
+from apps.products.api.serializers.product_detail_serializer import ProductDetailSerializer
 
 
 class ProductDetailAPIView(APIView):

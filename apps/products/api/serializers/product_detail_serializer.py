@@ -1,10 +1,10 @@
 from rest_framework import serializers
 from apps.products.models import Product
-from apps.products.api.serializers.CategorySerializer import CategorySerializer
-from apps.products.api.serializers.ProductFeatureSerializer import ProductFeatureSerializer
-from apps.products.api.serializers.ProductImageSerializer import ProductImageSerializer
-from apps.products.api.serializers.ProductTypeSerializer import ProductTypeSerializer
-from apps.products.api.serializers.ProductVariantSerializer import ProductVariantSerializer
+from apps.products.api.serializers.category_serializer import CategorySerializer
+from apps.products.api.serializers.product_feature_serializer import ProductFeatureSerializer
+from apps.products.api.serializers.product_image_serializer import ProductImageSerializer
+from apps.products.api.serializers.product_type_serializer import ProductTypeSerializer
+from apps.products.api.serializers.product_variant_serializer import ProductVariantSerializer
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
