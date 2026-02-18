@@ -14,6 +14,7 @@ env/
 .venv/
 .ENV/
 .virtualenv/
+myvenv/
 
 # =========================
 # Django
@@ -30,8 +31,7 @@ db.sqlite3-journal
 # Environment Variables
 # =========================
 .env
-.env.*
-*.env
+
 
 # =========================
 # Media & Static
