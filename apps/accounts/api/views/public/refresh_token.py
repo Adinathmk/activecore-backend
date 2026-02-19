@@ -12,6 +12,7 @@ User = get_user_model()
 
 class RefreshView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(
         request=None,

@@ -7,6 +7,7 @@ from drf_spectacular.utils import extend_schema
 
 class LogoutView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(
         tags=["auth"],

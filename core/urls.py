@@ -41,12 +41,11 @@ urlpatterns = [
 
 
     path(
-        "api/auth/",
-        include(("apps.accounts.api.urls", "accounts"), namespace="accounts"),
+        "api/auth/",include(("apps.accounts.api.urls", "accounts"), namespace="accounts"),
     ),
 
     path(
-        "products/",
-        include(("apps.products.api.urls", "products"), namespace="products"),
+        "products/",include(("apps.products.api.urls", "products"), namespace="products"),
     ),
+    
 ]

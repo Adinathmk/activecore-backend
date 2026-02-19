@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @extend_schema(
         request=LoginSerializer,
