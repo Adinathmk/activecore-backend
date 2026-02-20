@@ -9,6 +9,8 @@ class User(AbstractUser):
         CUSTOMER = "customer", "Customer"
         ADMIN = "admin", "Admin"
 
+    username = None
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
