@@ -17,6 +17,9 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     avg_rating = serializers.SerializerMethodField()
     rating_count = serializers.SerializerMethodField()
 
+    is_in_wishlist = serializers.SerializerMethodField()
+    is_in_cart = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = (
@@ -34,6 +37,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
             "is_new_arrival",
             "is_top_selling",
             "created_at",
+            "is_in_wishlist",
+            "is_in_cart",
         )
 
 
@@ -47,3 +52,19 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         if hasattr(obj, "metrics") and obj.metrics:
             return obj.metrics.rating_count
         return 0
+    def get_is_in_wishlist(self, obj):
+        wishlist_variant_ids = self.context.get("wishlist_variant_ids", set())
+
+        for variant in obj.variants.all():
+            if variant.id in wishlist_variant_ids:
+                return True
+        return False
+
+
+    def get_is_in_cart(self, obj):
+        cart_variant_ids = self.context.get("cart_variant_ids", set())
+
+        for variant in obj.variants.all():
+            if variant.id in cart_variant_ids:
+                return True
+        return False

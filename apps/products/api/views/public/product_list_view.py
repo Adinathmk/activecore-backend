@@ -15,6 +15,8 @@ from apps.products.models import Product, ProductVariant, ProductImage
 from apps.products.api.serializers.product_list_serializer import (
     ProductListSerializer
 )
+from apps.wishlist.models import WishlistItem
+from apps.cart.models import CartItem
 
 
 class ProductListAPIView(APIView):
@@ -138,10 +140,30 @@ class ProductListAPIView(APIView):
                 min_price=Min("variants__price")
             ).order_by("-min_price")
 
+        if request.user.is_authenticated:
+            wishlist_variant_ids = set(
+                WishlistItem.objects.filter(
+                    wishlist__user=request.user
+                ).values_list("product_variant_id", flat=True)
+            )
+
+            cart_variant_ids = set(
+                CartItem.objects.filter(
+                    cart__user=request.user
+                ).values_list("variant_id", flat=True)
+            )
+        else:
+            wishlist_variant_ids = set()
+            cart_variant_ids = set()
+
         serializer = ProductListSerializer(
             queryset.distinct(),
             many=True,
-            context={"request": request},
+            context={
+                "request": request,
+                "wishlist_variant_ids": wishlist_variant_ids,
+                "cart_variant_ids": cart_variant_ids,   # 👈 ADD THIS
+            },
         )
 
         return Response(serializer.data, status=status.HTTP_200_OK)

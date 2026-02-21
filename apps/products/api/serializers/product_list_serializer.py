@@ -13,6 +13,8 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     price = serializers.SerializerMethodField()
     in_stock = serializers.SerializerMethodField()
+    is_in_wishlist = serializers.SerializerMethodField()
+    is_in_cart = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -28,6 +30,8 @@ class ProductListSerializer(serializers.ModelSerializer):
             "is_new_arrival",
             "is_top_selling",
             "in_stock",
+            "is_in_wishlist",
+            "is_in_cart"
         )
 
     # --------------------------------
@@ -69,3 +73,19 @@ class ProductListSerializer(serializers.ModelSerializer):
             for v in obj.variants.all()
             if v.is_active
         )
+    
+    def get_is_in_wishlist(self, obj):  
+        wishlist_variant_ids = self.context.get("wishlist_variant_ids", set())
+
+        return any(
+            variant.id in wishlist_variant_ids
+            for variant in obj.variants.all()
+            if variant.is_active
+        )
+    def get_is_in_cart(self, obj):
+        cart_variant_ids = self.context.get("cart_variant_ids", set())
+
+        for variant in obj.variants.all():
+            if variant.id in cart_variant_ids:
+                return True
+        return False

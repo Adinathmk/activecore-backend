@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 
 from apps.products.models import Product
+from apps.wishlist.models import WishlistItem
+from apps.cart.models import CartItem
 from apps.products.api.serializers.product_detail_serializer import ProductDetailSerializer
 
 
@@ -27,5 +29,33 @@ class ProductDetailAPIView(APIView):
             is_active=True,
         )
 
-        serializer = ProductDetailSerializer(product)
+        if request.user.is_authenticated:
+            variant_ids = [v.id for v in product.variants.all()]
+
+            wishlist_variant_ids = set(
+                WishlistItem.objects.filter(
+                    wishlist__user=request.user,
+                    product_variant_id__in=variant_ids,
+                ).values_list("product_variant_id", flat=True)
+            )
+
+            cart_variant_ids = set(
+                CartItem.objects.filter(
+                    cart__user=request.user,
+                    variant_id__in=variant_ids,
+                ).values_list("variant_id", flat=True)
+            )
+        else:
+            wishlist_variant_ids = set()
+            cart_variant_ids = set()
+
+        serializer = ProductDetailSerializer(
+            product,
+            context={
+                "request": request,
+                "wishlist_variant_ids": wishlist_variant_ids,
+                "cart_variant_ids": cart_variant_ids,
+            },
+        )
+
         return Response(serializer.data, status=status.HTTP_200_OK)
