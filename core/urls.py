@@ -53,5 +53,8 @@ urlpatterns = [
     path(
         "cart/",include(("apps.cart.api.urls", "cart"), namespace="cart"),
     ),
+    path(
+        "orders/",include(("apps.orders.api.urls", "orders"), namespace="orders"),
+    ),
     
 ]
