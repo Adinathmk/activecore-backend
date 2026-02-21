@@ -50,5 +50,8 @@ urlpatterns = [
     path(
         "wishlist/",include(("apps.wishlist.api.urls", "wishlist"), namespace="wishlist"),
     ),
+    path(
+        "cart/",include(("apps.cart.api.urls", "cart"), namespace="cart"),
+    ),
     
 ]
