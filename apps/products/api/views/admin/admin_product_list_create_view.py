@@ -75,7 +75,7 @@ class AdminProductListCreateAPIView(ListCreateAPIView):
     # Swagger Documentation
     # -----------------------------
     @extend_schema(
-        tags=["Admin"],
+        tags=["product-admin"],
         summary="Admin Product List",
         parameters=[
             OpenApiParameter(name="is_active", type=bool),
@@ -89,7 +89,7 @@ class AdminProductListCreateAPIView(ListCreateAPIView):
         return super().get(request, *args, **kwargs)
 
     @extend_schema(
-        tags=["Admin"],
+        tags=["product-admin"],
         summary="Create Product",
         request=ProductCreateSerializer,
         responses={

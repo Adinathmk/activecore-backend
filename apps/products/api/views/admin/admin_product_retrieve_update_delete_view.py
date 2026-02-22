@@ -40,7 +40,7 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
     # GET → Retrieve
     # -----------------------------------------
     @extend_schema(
-        tags=["Admin"],
+        tags=["product-admin"],
         summary="Retrieve Complete Product Detail",
         responses={200: AdminProductDetailSerializer},
     )
@@ -58,7 +58,7 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
     # PATCH → Update
     # -----------------------------------------
     @extend_schema(
-        tags=["Admin"],
+        tags=["product-admin"],
         summary="Update Product",
         request=ProductFullUpdateSerializer,
         responses={200: AdminProductDetailSerializer},
@@ -88,7 +88,7 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
     # DELETE → Soft Delete
     # -----------------------------------------
     @extend_schema(
-        tags=["Admin"],
+        tags=["product-admin"],
         summary="Soft Delete Product",
         responses={
             204: OpenApiResponse(description="Product deactivated"),

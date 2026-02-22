@@ -14,7 +14,7 @@ class AdminCategoryCreateAPIView(APIView):
     permission_classes = [IsAdminUser]
 
     @extend_schema(
-        tags=["Admin"],
+        tags=["product-admin"],
         summary="Create Category",
         description="Creates a new product category (Admin only).",
         request=CategorySerializer,

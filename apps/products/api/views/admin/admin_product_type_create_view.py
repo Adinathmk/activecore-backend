@@ -13,7 +13,7 @@ class AdminProductTypeCreateAPIView(APIView):
     permission_classes = [IsAdminUser]
 
     @extend_schema(
-        tags=["Admin"],
+        tags=["product-admin"],
         summary="Create Product Type",
         description="Creates a new product type (Admin only).",
         operation_id="admin_product_type_create",

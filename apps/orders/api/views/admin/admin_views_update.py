@@ -16,7 +16,7 @@ class AdminOrderStatusUpdateView(APIView):
     permission_classes = [IsAdminUser]
     
     @extend_schema(
-        tags=["Admin Orders"],
+        tags=["Orders-admin"],
         summary="Admin: Update order status",
         description="Allows admin users to update the status of an order.",
         request=AdminOrderStatusUpdateSerializer,

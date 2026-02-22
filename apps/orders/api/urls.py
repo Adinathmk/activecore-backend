@@ -6,7 +6,13 @@ from .views.public.public_views import (
     CancelOrderView,
     # PaymentConfirmView,
 )
-from .views.admin.admin_views import AdminOrderStatusUpdateView
+from .views.admin.admin_views_update import AdminOrderStatusUpdateView
+from .views.admin.admin_order_detail_view import AdminOrderDetailView
+from .views.admin.admin_order_list_view import AdminOrderListView
+from .views.admin.admin_order_stats_view import AdminOrderStatsView
+
+
+
 
 urlpatterns = [
 
@@ -40,4 +46,7 @@ urlpatterns = [
 #     # =========================
 
     path("admin/<uuid:pk>/update-status/",AdminOrderStatusUpdateView.as_view(),name="admin-order-update-status"),
+    path("admin/", AdminOrderListView.as_view(), name="admin-order-list"),
+    path("adimn/stats/", AdminOrderStatsView.as_view(), name="admin-order-stats"),
+    path("admin/<uuid:pk>/", AdminOrderDetailView.as_view(), name="admin-order-detail"),
 ]
