@@ -1,12 +1,12 @@
 from django.urls import path
-from .views import (
+from .views.public.public_views import (
     CheckoutView,
     OrderListView,
     OrderDetailView,
     CancelOrderView,
-    AdminOrderStatusUpdateView,
     # PaymentConfirmView,
 )
+from .views.admin.admin_views import AdminOrderStatusUpdateView
 
 urlpatterns = [
 

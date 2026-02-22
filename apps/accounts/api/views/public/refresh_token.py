@@ -5,6 +5,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.timezone import now
+from datetime import datetime
+from django.utils.timezone import make_aware
 from drf_spectacular.utils import extend_schema
 from apps.accounts.api.serializers.cookie_refresh_serializer import CookieRefreshSerializer
 
@@ -30,7 +33,6 @@ class RefreshView(APIView):
                 status=401
             )
 
-        # Optional but fine for schema consistency
         serializer = CookieRefreshSerializer(
             data={"refresh": refresh_token}
         )
@@ -45,13 +47,23 @@ class RefreshView(APIView):
 
             user = User.objects.get(id=user_id)
 
-            # 🔥 THIS IS WHAT YOU MISSED
+            # 🔥 Get original expiration
+            original_exp = old_refresh["exp"]
+            exp_datetime = make_aware(datetime.fromtimestamp(original_exp))
+
+            # Prevent refresh if already expired
+            if exp_datetime <= now():
+                raise TokenError("Refresh token expired")
+
+            # Blacklist old token
             old_refresh.blacklist()
 
-            # ✅ CORRECT rotation
+            # Create new refresh token
             new_refresh = RefreshToken.for_user(user)
 
-        
+            # 🔥 Inherit original expiration (absolute lifetime)
+            new_refresh["exp"] = original_exp
+
         except (TokenError, User.DoesNotExist):
             response = Response(
                 {"detail": "Invalid or expired refresh token"},

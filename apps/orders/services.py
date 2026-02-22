@@ -18,6 +18,7 @@ ALLOWED_TRANSITIONS = {
     "REFUNDED": [],
 }
 
+    #--------------------------------------------------------------------------
 
 class OrderService:
 
@@ -31,11 +32,10 @@ class OrderService:
         if first_image:
             return first_image.image_url
 
-        return ""
+        return ""  
     
 
-
-
+    #--------------------------------------------------------------------------
 
     @staticmethod
     @transaction.atomic
@@ -120,6 +120,7 @@ class OrderService:
 
         return order
     
+    #--------------------------------------------------------------------------
 
     @staticmethod
     @transaction.atomic
@@ -149,6 +150,7 @@ class OrderService:
 
         return order
     
+    #--------------------------------------------------------------------------
 
     @staticmethod
     @transaction.atomic
