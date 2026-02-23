@@ -31,9 +31,9 @@ class MoveAllWishlistToCartView(APIView):
         user = request.user
 
         wishlist = Wishlist.objects.select_for_update().get(user=user)
-
         wishlist_items = list(
             WishlistItem.objects
+            .select_related("product_variant__product")
             .select_for_update()
             .filter(wishlist=wishlist)
         )
@@ -41,40 +41,17 @@ class MoveAllWishlistToCartView(APIView):
         if not wishlist_items:
             return Response({"detail": "Wishlist is empty."}, status=400)
 
-        variant_ids = [item.product_variant_id for item in wishlist_items]
-
-        variants = (
-            ProductVariant.objects
-            .select_for_update()
-            .filter(id__in=variant_ids, is_active=True, product__is_active=True)
-        )
-        variant_map = {v.id: v for v in variants}
-
-        inventories = (
-            Inventory.objects
-            .select_for_update()
-            .filter(variant_id__in=variant_ids)
-        )
-        inventory_map = {inv.variant_id: inv for inv in inventories}
-
         cart, _ = Cart.objects.get_or_create(user=user)
 
-        existing_cart_items = (
-            CartItem.objects
-            .select_for_update()
-            .filter(cart=cart, variant_id__in=variant_ids)
-        )
-        cart_item_map = {item.variant_id: item for item in existing_cart_items}
-
-        items_to_create = []
-        items_to_update = []
-
         for item in wishlist_items:
-            variant = variant_map.get(item.product_variant_id)
-            inventory = inventory_map.get(item.product_variant_id)
+            variant = item.product_variant
 
-            if not variant or not inventory:
+            if not variant.is_active or not variant.product.is_active:
                 continue
+
+            inventory = Inventory.objects.select_for_update().get(
+                variant=variant
+            )
 
             if inventory.available_stock < 1:
                 return Response(
@@ -82,42 +59,27 @@ class MoveAllWishlistToCartView(APIView):
                     status=400
                 )
 
-            existing_item = cart_item_map.get(variant.id)
-
-            if existing_item:
-                existing_item.quantity += 1
-                existing_item.unit_price = variant.selling_price
-                existing_item.discount_percent = variant.discount_percent
-                items_to_update.append(existing_item)
-            else:
-                items_to_create.append(
-                    CartItem(
-                        cart=cart,
-                        variant=variant,
-                        quantity=1,
-                        unit_price=variant.selling_price,
-                        discount_percent=variant.discount_percent,
-                    )
-                )
-
-        if items_to_create:
-            CartItem.objects.bulk_create(items_to_create)
-
-        if items_to_update:
-            CartItem.objects.bulk_update(
-                items_to_update,
-                ["quantity", "unit_price", "discount_percent"]
+            cart_item, created = CartItem.objects.select_for_update().get_or_create(
+                cart=cart,
+                variant=variant,
+                defaults={
+                    "quantity": 1,
+                    "unit_price": variant.selling_price,
+                    "discount_percent": variant.discount_percent,
+                }
             )
 
-        WishlistItem.objects.filter(
-            id__in=[item.id for item in wishlist_items]
-        ).delete()
+            if not created:
+                cart_item.quantity += 1
+                cart_item.unit_price = variant.selling_price
+                cart_item.discount_percent = variant.discount_percent
+                cart_item.save()
+
+        wishlist.items.all().delete()
 
         cart.recalculate_totals()
 
-        return Response(
-            {
-                "wishlist_count": 0,
-                "detail": "All wishlist items moved to cart successfully."
-            }
-        )
+        return Response({
+            "wishlist_count": 0,
+            "detail": "All wishlist items moved to cart successfully."
+        })

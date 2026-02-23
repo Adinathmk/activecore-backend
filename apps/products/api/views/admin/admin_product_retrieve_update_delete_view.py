@@ -20,9 +20,7 @@ from apps.products.api.serializers.product_update_serializer import (
 class AdminProductRetrieveUpdateDeleteAPIView(APIView):
     permission_classes = [IsAdminUser]
 
-    # -----------------------------------------
-    # Helper: Optimized Query
-    # -----------------------------------------
+
     def get_object(self, pk):
         return get_object_or_404(
             Product.objects
@@ -36,9 +34,6 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
             pk=pk
         )
 
-    # -----------------------------------------
-    # GET → Retrieve
-    # -----------------------------------------
     @extend_schema(
         tags=["product-admin"],
         summary="Retrieve Complete Product Detail",
@@ -54,9 +49,6 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    # -----------------------------------------
-    # PATCH → Update
-    # -----------------------------------------
     @extend_schema(
         tags=["product-admin"],
         summary="Update Product",
@@ -67,7 +59,7 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
     def patch(self, request, pk):
         product = self.get_object(pk)
 
-        # 🔹 WRITE serializer
+       
         write_serializer = ProductFullUpdateSerializer(
             product,
             data=request.data,
@@ -76,7 +68,7 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
         write_serializer.is_valid(raise_exception=True)
         write_serializer.save()
 
-        # 🔹 READ serializer (important!)
+       
         read_serializer = AdminProductDetailSerializer(
             product,
             context={"request": request}
@@ -84,9 +76,6 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
 
         return Response(read_serializer.data, status=status.HTTP_200_OK)
 
-    # -----------------------------------------
-    # DELETE → Soft Delete
-    # -----------------------------------------
     @extend_schema(
         tags=["product-admin"],
         summary="Soft Delete Product",
@@ -105,11 +94,11 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Soft delete product
+        
         product.is_active = False
         product.save(update_fields=["is_active"])
 
-        # Deactivate all variants
+        
         product.variants.update(is_active=False)
 
         return Response(

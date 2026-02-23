@@ -5,12 +5,14 @@ from apps.products.models import Product
 class AdminProductListSerializer(serializers.ModelSerializer):
     category = serializers.StringRelatedField()
     product_type = serializers.StringRelatedField()
+
     avg_rating = serializers.DecimalField(
         source="metrics.avg_rating",
         max_digits=2,
         decimal_places=1,
         read_only=True
     )
+
     rating_count = serializers.IntegerField(
         source="metrics.rating_count",
         read_only=True
@@ -27,6 +29,7 @@ class AdminProductListSerializer(serializers.ModelSerializer):
             "is_active",
             "is_new_arrival",
             "is_top_selling",
+            "is_featured", 
             "created_at",
             "avg_rating",
             "rating_count",

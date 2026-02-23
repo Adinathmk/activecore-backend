@@ -46,14 +46,24 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             "product_type",
             "is_new_arrival",
             "is_top_selling",
+            "is_featured",
             "images",
             "features",
             "variants",
         )
 
-    # ---------------------------
-    # Image Validation
-    # ---------------------------
+    def validate_is_featured(self, value):
+        if value:
+            featured_count = Product.objects.filter(
+                is_featured=True
+            ).exclude(id=self.instance.id if self.instance else None).count()
+
+            if featured_count >= 8:
+                raise serializers.ValidationError(
+                    "Maximum 8 featured products allowed."
+                )
+        return value
+  
 
     def validate_images(self, value):
         primary_count = sum(1 for img in value if img.get("is_primary"))
@@ -63,9 +73,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             )
         return value
 
-    # ---------------------------
-    # Prevent Duplicate Variant Sizes
-    # ---------------------------
+
 
     def validate_variants(self, value):
         sizes = [v["size"] for v in value]
@@ -75,23 +83,19 @@ class ProductCreateSerializer(serializers.ModelSerializer):
             )
         return value
 
-    # ---------------------------
-    # Create Logic
-    # ---------------------------
-
+ 
     @transaction.atomic
     def create(self, validated_data):
         images_data = validated_data.pop("images")
         features_data = validated_data.pop("features", [])
         variants_data = validated_data.pop("variants")
 
-        # 1️⃣ Create Product
+
         product = Product.objects.create(**validated_data)
 
-        # 2️⃣ Create Metrics
         ProductMetrics.objects.create(product=product)
 
-        # 3️⃣ Create Images
+
         for index, image in enumerate(images_data):
             ProductImage.objects.create(
                 product=product,
@@ -101,14 +105,13 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 order=index
             )
 
-        # 4️⃣ Create Features
+
         for feature in features_data:
             ProductFeature.objects.create(
                 product=product,
                 text=feature
             )
 
-        # 5️⃣ Create Variants + Safe Inventory
         for variant_data in variants_data:
             stock = variant_data.pop("stock")
 
@@ -117,7 +120,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
                 **variant_data
             )
 
-            # 🔥 Safe Inventory Creation
+
             Inventory.objects.update_or_create(
                 variant=variant,
                 defaults={"stock": stock}

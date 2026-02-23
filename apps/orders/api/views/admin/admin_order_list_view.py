@@ -15,7 +15,6 @@ class AdminOrderListView(generics.ListAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = OrderSerializer
 
-    # Only DRF Search + Ordering
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["id", "user__email", "user__first_name", "user__last_name"]
     ordering_fields = ["placed_at", "total_amount"]
@@ -26,10 +25,14 @@ class AdminOrderListView(generics.ListAPIView):
             Order.objects
             .select_related("user")
             .prefetch_related("items")
-            .all()
         )
 
-        # ✅ Manual status filter
+        
+        order_id = self.request.query_params.get("id")
+        if order_id:
+            queryset = queryset.filter(id=order_id)
+
+        
         status_param = self.request.query_params.get("status")
         if status_param:
             queryset = queryset.filter(status=status_param)

@@ -43,6 +43,7 @@ class Product(SlugMixin):
     is_active = models.BooleanField(default=True)
     is_new_arrival = models.BooleanField(default=False)
     is_top_selling = models.BooleanField(default=False)
+    is_featured = models.BooleanField(default=False, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

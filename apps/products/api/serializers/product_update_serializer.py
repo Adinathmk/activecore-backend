@@ -10,10 +10,6 @@ from apps.products.models import (
 )
 
 
-# -----------------------------------
-# Nested Variant Update Serializer
-# -----------------------------------
-
 class VariantUpdateSerializer(serializers.Serializer):
     size = serializers.ChoiceField(choices=ProductVariant.SIZE_CHOICES)
     price = serializers.DecimalField(max_digits=10, decimal_places=2)
@@ -26,9 +22,6 @@ class VariantUpdateSerializer(serializers.Serializer):
     stock = serializers.IntegerField(min_value=0)
 
 
-# -----------------------------------
-# Nested Image Update Serializer
-# -----------------------------------
 
 class ImageUpdateSerializer(serializers.Serializer):
     image_url = serializers.URLField()
@@ -36,9 +29,6 @@ class ImageUpdateSerializer(serializers.Serializer):
     is_secondary = serializers.BooleanField(default=False)
 
 
-# -----------------------------------
-# Main Full Update Serializer
-# -----------------------------------
 
 class ProductFullUpdateSerializer(serializers.ModelSerializer):
 
@@ -59,14 +49,24 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
             "is_active",
             "is_new_arrival",
             "is_top_selling",
+            "is_featured",
             "images",
             "features",
             "variants",
         )
 
-    # -----------------------------------
-    # Image Validation
-    # -----------------------------------
+    def validate_is_featured(self, value):
+        if value:
+            featured_count = Product.objects.filter(
+                is_featured=True
+            ).exclude(id=self.instance.id if self.instance else None).count()
+
+            if featured_count >= 5:
+                raise serializers.ValidationError(
+                    "Maximum 4 featured products allowed."
+                )
+        return value
+
 
     def validate_images(self, value):
         primary_count = sum(1 for img in value if img.get("is_primary"))
@@ -84,9 +84,6 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
 
         return value
 
-    # -----------------------------------
-    # Full Update Logic
-    # -----------------------------------
 
     @transaction.atomic
     def update(self, instance, validated_data):
@@ -94,13 +91,13 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
         features_data = validated_data.pop("features", [])
         variants_data = validated_data.pop("variants")
 
-        # 1️⃣ Update Product Basic Fields
+        
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         instance.save()
 
-        # 2️⃣ Replace Images (Safe Replace Strategy)
+        
         instance.images.all().delete()
 
         for index, image in enumerate(images_data):
@@ -112,7 +109,7 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
                 order=index
             )
 
-        # 3️⃣ Replace Features
+
         instance.features.all().delete()
 
         for feature in features_data:
@@ -120,8 +117,6 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
                 product=instance,
                 text=feature
             )
-
-        # 4️⃣ Update Variants (Smart Matching by Size)
 
         existing_variants = {
             variant.size: variant
@@ -136,7 +131,7 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
             submitted_sizes.append(size)
 
             if size in existing_variants:
-                # Update existing variant
+                
                 variant = existing_variants[size]
                 variant.price = variant_data["price"]
                 variant.discount_percent = variant_data.get(
@@ -145,7 +140,7 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
                 variant.is_active = True
                 variant.save()
 
-                # Update inventory
+                
                 if hasattr(variant, "inventory"):
                     variant.inventory.stock = stock
                     variant.inventory.save()
@@ -155,7 +150,7 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
                         stock=stock
                     )
             else:
-                # Create new variant
+                
                 new_variant = ProductVariant.objects.create(
                     product=instance,
                     **variant_data
@@ -165,7 +160,7 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
                     stock=stock
                 )
 
-        # 5️⃣ Deactivate Removed Variants (Soft deactivate)
+        
         for size, variant in existing_variants.items():
             if size not in submitted_sizes:
                 variant.is_active = False

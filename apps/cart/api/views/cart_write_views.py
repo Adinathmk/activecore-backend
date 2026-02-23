@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse,OpenApiParameter,OpenApiResponse
 
 from apps.products.models import ProductVariant, Inventory
 from ...models import Cart, CartItem
@@ -87,7 +87,24 @@ class AddToCartView(APIView):
 
 @extend_schema(
     summary="Update cart item quantity",
+    description="Update the quantity of a specific cart item. If quantity is 0, the item will be removed.",
     tags=["cart"],
+    parameters=[
+        OpenApiParameter(
+            name="item_id",
+            type=int,
+            location=OpenApiParameter.PATH,
+            required=True,
+            description="ID of the cart item to update",
+        )
+    ],
+    request=UpdateCartItemSerializer,
+    responses={
+        200: CartSerializer,
+        400: OpenApiResponse(description="Invalid quantity or insufficient stock"),
+        401: OpenApiResponse(description="Authentication required"),
+        404: OpenApiResponse(description="Cart item not found"),
+    },
 )
 class UpdateCartItemView(APIView):
     permission_classes = [IsAuthenticated]

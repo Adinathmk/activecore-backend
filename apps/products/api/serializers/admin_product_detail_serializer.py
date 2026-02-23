@@ -12,9 +12,6 @@ from apps.products.models import (
 )
 
 
-# -----------------------------------
-# Category Serializer
-# -----------------------------------
 
 class AdminCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,9 +19,6 @@ class AdminCategorySerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug")
 
 
-# -----------------------------------
-# Product Type Serializer
-# -----------------------------------
 
 class AdminProductTypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,9 +26,7 @@ class AdminProductTypeSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "slug", "is_active")
 
 
-# -----------------------------------
-# Inventory Serializer
-# -----------------------------------
+
 
 class AdminInventorySerializer(serializers.ModelSerializer):
     available_stock = serializers.IntegerField(read_only=True)
@@ -43,10 +35,6 @@ class AdminInventorySerializer(serializers.ModelSerializer):
         model = Inventory
         fields = ("stock", "reserved", "available_stock")
 
-
-# -----------------------------------
-# Variant Serializer
-# -----------------------------------
 
 class AdminVariantDetailSerializer(serializers.ModelSerializer):
     inventory = AdminInventorySerializer(read_only=True)
@@ -70,9 +58,6 @@ class AdminVariantDetailSerializer(serializers.ModelSerializer):
         )
 
 
-# -----------------------------------
-# Image Serializer
-# -----------------------------------
 
 class AdminProductImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -86,9 +71,6 @@ class AdminProductImageSerializer(serializers.ModelSerializer):
         )
 
 
-# -----------------------------------
-# Feature Serializer
-# -----------------------------------
 
 class AdminProductFeatureSerializer(serializers.ModelSerializer):
     class Meta:
@@ -96,9 +78,7 @@ class AdminProductFeatureSerializer(serializers.ModelSerializer):
         fields = ("id", "text")
 
 
-# -----------------------------------
-# Rating Serializer
-# -----------------------------------
+
 
 class AdminProductRatingSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField()
@@ -113,9 +93,6 @@ class AdminProductRatingSerializer(serializers.ModelSerializer):
         )
 
 
-# -----------------------------------
-# Metrics Serializer
-# -----------------------------------
 
 class AdminProductMetricsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -123,9 +100,6 @@ class AdminProductMetricsSerializer(serializers.ModelSerializer):
         fields = ("avg_rating", "rating_count")
 
 
-# -----------------------------------
-# MAIN COMPLETE PRODUCT DETAIL
-# -----------------------------------
 
 class AdminProductDetailSerializer(serializers.ModelSerializer):
 

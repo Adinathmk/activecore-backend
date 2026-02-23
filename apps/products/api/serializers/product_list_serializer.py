@@ -34,9 +34,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "is_in_cart"
         )
 
-    # --------------------------------
-    # Images
-    # --------------------------------
+
 
     def get_primary_image(self, obj):
         image = next(
@@ -51,9 +49,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         ]
         return secondary[0].image_url if secondary else None
 
-    # --------------------------------
-    # Price (ONE variant – lowest)
-    # --------------------------------
+
 
     def get_price(self, obj):
         prices = [
@@ -63,9 +59,6 @@ class ProductListSerializer(serializers.ModelSerializer):
         ]
         return min(prices) if prices else None
 
-    # --------------------------------
-    # Stock
-    # --------------------------------
 
     def get_in_stock(self, obj):
         return any(

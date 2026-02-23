@@ -15,17 +15,12 @@ from apps.products.api.serializers.admin_product_detail_serializer import AdminP
 class AdminProductListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAdminUser]
 
-    # -----------------------------
-    # Dynamic Serializer Selection
-    # -----------------------------
+
     def get_serializer_class(self):
         if self.request.method == "POST":
             return ProductCreateSerializer
         return AdminProductListSerializer
 
-    # -----------------------------
-    # Queryset with Filtering
-    # -----------------------------
     def get_queryset(self):
         queryset = (
             Product.objects
@@ -55,15 +50,13 @@ class AdminProductListCreateAPIView(ListCreateAPIView):
 
         return queryset
 
-    # -----------------------------
-    # FIXED CREATE METHOD 🔥
-    # -----------------------------
+    
     def create(self, request, *args, **kwargs):
         serializer = ProductCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         product = serializer.save()
 
-        # Return READ serializer instead of WRITE serializer
+        
         response_serializer = AdminProductDetailSerializer(product)
 
         return Response(
@@ -71,9 +64,6 @@ class AdminProductListCreateAPIView(ListCreateAPIView):
             status=status.HTTP_201_CREATED
         )
 
-    # -----------------------------
-    # Swagger Documentation
-    # -----------------------------
     @extend_schema(
         tags=["product-admin"],
         summary="Admin Product List",
