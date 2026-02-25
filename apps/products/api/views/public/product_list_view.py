@@ -89,26 +89,18 @@ class ProductListAPIView(APIView):
 
         params = request.query_params
 
-        # -------------------------
-        # Category Filter
-        # -------------------------
+      
         if category := params.get("category"):
             queryset = queryset.filter(
                 category__slug__iexact=category
             )
 
-        # -------------------------
-        # Size Filter
-        # -------------------------
         if size := params.get("size"):
             queryset = queryset.filter(
                 variants__size__iexact=size,
                 variants__is_active=True
             ).distinct()
 
-        # -------------------------
-        # Price Range Filter
-        # -------------------------
         min_price = params.get("min_price")
         max_price = params.get("max_price")
 
@@ -122,9 +114,7 @@ class ProductListAPIView(APIView):
                 variants__price__lte=max_price
             )
 
-        # -------------------------
-        # Sorting
-        # -------------------------
+ 
         sort = params.get("sort")
 
         if sort == "newest":
@@ -162,8 +152,8 @@ class ProductListAPIView(APIView):
             context={
                 "request": request,
                 "wishlist_variant_ids": wishlist_variant_ids,
-                "cart_variant_ids": cart_variant_ids,   # 👈 ADD THIS
+                "cart_variant_ids": cart_variant_ids,
             },
         )
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)         

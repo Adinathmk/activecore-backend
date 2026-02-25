@@ -4,6 +4,7 @@ from .views.public.public_views import (
     OrderListView,
     OrderDetailView,
     CancelOrderView,
+    AccountOverviewView
     # PaymentConfirmView,
 )
 from .views.admin.admin_views_update import AdminOrderStatusUpdateView
@@ -16,21 +17,14 @@ from .views.admin.admin_order_stats_view import AdminOrderStatsView
 
 urlpatterns = [
 
-    # =========================
-    # USER ROUTES
-    # =========================
+# PUBLIC ROUTES
 
-    # Create Order (Reserve Stock)
+
     path("checkout/", CheckoutView.as_view(), name="order-checkout"),
-
-    # List User Orders
     path("", OrderListView.as_view(), name="order-list"),
-
-    # Order Detail
     path("<uuid:pk>/", OrderDetailView.as_view(), name="order-detail"),
-
-    # Cancel Order
     path("<uuid:pk>/cancel/", CancelOrderView.as_view(), name="order-cancel"),
+    path("account-overview/", AccountOverviewView.as_view(), name="account-overview"),
 
 
     # =========================
@@ -41,9 +35,9 @@ urlpatterns = [
 #     path("<uuid:pk>/confirm-payment/", PaymentConfirmView.as_view(), name="order-confirm-payment"),
 
 
-#     # =========================
-#     # ADMIN ROUTES
-#     # =========================
+
+# ADMIN ROUTES
+
 
     path("admin/<uuid:pk>/update-status/",AdminOrderStatusUpdateView.as_view(),name="admin-order-update-status"),
     path("admin/", AdminOrderListView.as_view(), name="admin-order-list"),

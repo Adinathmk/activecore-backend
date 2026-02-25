@@ -8,7 +8,10 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from ....services import OrderService
 from ....models import Order
-from ...serializers import OrderSerializer, CheckoutSerializer
+from ...serializers import OrderSerializer, CheckoutSerializer, AccountOverviewSerializer
+
+from django.db.models import Count, Sum, Q
+
 
 
 
@@ -99,3 +102,34 @@ class CancelOrderView(APIView):
 
 
 #--------------------------------------------------------------------------
+
+
+
+
+
+class AccountOverviewView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=["Orders"],
+        summary="Account Overview",
+        description="Returns summary statistics for the authenticated user's account.",
+        responses={200: AccountOverviewSerializer},
+    )
+    def get(self, request):
+
+        user_orders = Order.objects.filter(user=request.user)
+
+        stats = user_orders.aggregate(
+            total_orders=Count("id"),
+            pending_orders=Count("id", filter=Q(status="PENDING")),
+            delivered_orders=Count("id", filter=Q(status="DELIVERED")),
+            cancelled_orders=Count("id", filter=Q(status="CANCELLED")),
+            total_spent=Sum("total_amount", filter=Q(status="DELIVERED")),
+        )
+
+        stats["total_spent"] = stats["total_spent"] or 0
+
+        serializer = AccountOverviewSerializer(stats)
+
+        return Response(serializer.data)

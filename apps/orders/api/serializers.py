@@ -24,3 +24,11 @@ class CheckoutSerializer(serializers.Serializer):
 
 class AdminOrderStatusUpdateSerializer(serializers.Serializer):
     new_status = serializers.ChoiceField(choices=OrderStatus.choices)
+
+
+class AccountOverviewSerializer(serializers.Serializer):
+    total_orders = serializers.IntegerField()
+    pending_orders = serializers.IntegerField()
+    delivered_orders = serializers.IntegerField()
+    cancelled_orders = serializers.IntegerField()
+    total_spent = serializers.DecimalField(max_digits=12, decimal_places=2)
