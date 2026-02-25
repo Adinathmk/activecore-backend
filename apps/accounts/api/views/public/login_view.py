@@ -4,6 +4,8 @@ from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from apps.accounts.api.serializers.login_serializer import LoginSerializer
+from apps.accounts.api.serializers.user_serializer import UserSerializer
+
 from drf_spectacular.utils import extend_schema
 
 class LoginView(APIView):
@@ -25,7 +27,9 @@ class LoginView(APIView):
 
         refresh["role"] = user.role
 
-        response = Response({"detail": "Login successful"})
+        response = Response({
+            "user": UserSerializer(user).data
+        })
 
         response.set_cookie(
             "access",
