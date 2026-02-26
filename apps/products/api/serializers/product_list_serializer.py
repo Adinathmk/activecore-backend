@@ -12,6 +12,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     secondary_image = serializers.SerializerMethodField()
 
     price = serializers.SerializerMethodField()
+    variant_id = serializers.SerializerMethodField()
     in_stock = serializers.SerializerMethodField()
     is_in_wishlist = serializers.SerializerMethodField()
     is_in_cart = serializers.SerializerMethodField()
@@ -27,15 +28,29 @@ class ProductListSerializer(serializers.ModelSerializer):
             "primary_image",
             "secondary_image",
             "price",
+            "variant_id",   # ✅ added here
             "is_new_arrival",
             "is_top_selling",
             "in_stock",
             "is_in_wishlist",
-            "is_in_cart"
+            "is_in_cart",
         )
 
+    # -------------------------
+    # Helper Method
+    # -------------------------
+    def _get_active_variants(self, obj):
+        return [v for v in obj.variants.all() if v.is_active]
 
+    def _get_cheapest_variant(self, obj):
+        active_variants = self._get_active_variants(obj)
+        if not active_variants:
+            return None
+        return min(active_variants, key=lambda v: v.selling_price)
 
+    # -------------------------
+    # Images
+    # -------------------------
     def get_primary_image(self, obj):
         image = next(
             (img for img in obj.images.all() if img.is_primary),
@@ -44,41 +59,57 @@ class ProductListSerializer(serializers.ModelSerializer):
         return image.image_url if image else None
 
     def get_secondary_image(self, obj):
-        secondary = [
-            img for img in obj.images.all() if not img.is_primary
-        ]
-        return secondary[0].image_url if secondary else None
+        image = next(
+            (img for img in obj.images.all() if img.is_secondary),
+            None
+        )
+        return image.image_url if image else None
 
-
-
+    # -------------------------
+    # Price
+    # -------------------------
     def get_price(self, obj):
-        prices = [
-            variant.selling_price
-            for variant in obj.variants.all()
-            if variant.is_active
-        ]
-        return min(prices) if prices else None
+        cheapest_variant = self._get_cheapest_variant(obj)
+        return cheapest_variant.selling_price if cheapest_variant else None
 
+    # -------------------------
+    # Variant ID (Cheapest Active Variant)
+    # -------------------------
+    def get_variant_id(self, obj):
+        cheapest_variant = self._get_cheapest_variant(obj)
+        return cheapest_variant.id if cheapest_variant else None
 
+    # -------------------------
+    # Stock
+    # -------------------------
     def get_in_stock(self, obj):
+        active_variants = self._get_active_variants(obj)
+
         return any(
             hasattr(v, "inventory") and v.inventory.available_stock > 0
-            for v in obj.variants.all()
-            if v.is_active
+            for v in active_variants
         )
-    
-    def get_is_in_wishlist(self, obj):  
+
+    # -------------------------
+    # Wishlist
+    # -------------------------
+    def get_is_in_wishlist(self, obj):
         wishlist_variant_ids = self.context.get("wishlist_variant_ids", set())
+        active_variants = self._get_active_variants(obj)
 
         return any(
-            variant.id in wishlist_variant_ids
-            for variant in obj.variants.all()
-            if variant.is_active
+            v.id in wishlist_variant_ids
+            for v in active_variants
         )
+
+    # -------------------------
+    # Cart
+    # -------------------------
     def get_is_in_cart(self, obj):
         cart_variant_ids = self.context.get("cart_variant_ids", set())
+        active_variants = self._get_active_variants(obj)
 
-        for variant in obj.variants.all():
-            if variant.id in cart_variant_ids:
-                return True
-        return False
+        return any(
+            v.id in cart_variant_ids
+            for v in active_variants
+        )

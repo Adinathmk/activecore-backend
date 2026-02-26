@@ -48,13 +48,13 @@ urlpatterns = [
         "api/products/",include(("apps.products.api.urls", "products"), namespace="products"),
     ),
     path(
-        "wishlist/",include(("apps.wishlist.api.urls", "wishlist"), namespace="wishlist"),
+        "api/wishlist/",include(("apps.wishlist.api.urls", "wishlist"), namespace="wishlist"),
     ),
     path(
-        "cart/",include(("apps.cart.api.urls", "cart"), namespace="cart"),
+        "api/cart/",include(("apps.cart.api.urls", "cart"), namespace="cart"),
     ),
     path(
-        "orders/",include(("apps.orders.api.urls", "orders"), namespace="orders"),
+        "api/orders/",include(("apps.orders.api.urls", "orders"), namespace="orders"),
     ),
     
 ]
