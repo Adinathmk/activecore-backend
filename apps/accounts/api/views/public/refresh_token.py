@@ -69,8 +69,8 @@ class RefreshView(APIView):
                 {"detail": "Invalid or expired refresh token"},
                 status=401
             )
-            response.delete_cookie("access", path="/", samesite="Lax")
-            response.delete_cookie("refresh", path="/", samesite="Lax")
+            response.delete_cookie("access", path="/", samesite="None")
+            response.delete_cookie("refresh", path="/", samesite="None")
             return response
 
         response = Response({"detail": "Token refreshed"})
@@ -79,8 +79,8 @@ class RefreshView(APIView):
             "access",
             str(new_refresh.access_token),
             httponly=True,
-            secure=not settings.DEBUG,
-            samesite="Lax",
+            secure=not settings.DEBUG,            # must be False on localhost
+            samesite="Lax",            # ✅ NOT Strict
             path="/",
         )
 
@@ -88,8 +88,8 @@ class RefreshView(APIView):
             "refresh",
             str(new_refresh),
             httponly=True,
-            secure=not settings.DEBUG,
-            samesite="Lax",
+            secure=not settings.DEBUG,              # must be False on localhost
+            samesite="Lax",            # ✅ NOT Strict
             path="/",
         )
 

@@ -9,6 +9,7 @@ from .views.admin.admin_user_action import (
 )
 from .views.admin.admin_user_list import AdminUserListView
 from .views.admin.admin_user_detail import AdminUserDetailView
+from .views.public.me_view import MeView
 
 app_name = "accounts"
 
@@ -17,6 +18,10 @@ urlpatterns = [
     path("refresh/", RefreshView.as_view()),
     path("logout/", LogoutView.as_view()),
     path("register/", RegisterView.as_view(), name="auth-register"),
+
+    
+
+    path("me/", MeView.as_view(), name="me"),
 
 
     path("admin/users/", AdminUserListView.as_view()),

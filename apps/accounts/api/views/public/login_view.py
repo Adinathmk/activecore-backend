@@ -37,6 +37,7 @@ class LoginView(APIView):
             httponly=True,
             secure=not settings.DEBUG,
             samesite="Lax",
+            path="/",
         )
 
         response.set_cookie(
@@ -45,5 +46,6 @@ class LoginView(APIView):
             httponly=True,
             secure=not settings.DEBUG,
             samesite="Lax",
+            path="/",
         )
         return response
