@@ -3,8 +3,8 @@ from django.conf import settings
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 from django.db.models import F
+from core.pricing import PricingEngine
 
-GST_PERCENTAGE = Decimal("18.00")
 
 
 class Cart(models.Model):
@@ -42,16 +42,12 @@ class Cart(models.Model):
 
         subtotal = sum(item.total_price for item in items)
 
-        tax_amount = (subtotal * GST_PERCENTAGE) / Decimal("100")
+        pricing = PricingEngine.calculate(subtotal)
 
-        shipping_amount = Decimal("0.00")  # Can plug shipping engine later
-
-        total_amount = subtotal + tax_amount + shipping_amount
-
-        self.subtotal = subtotal
-        self.tax_amount = tax_amount
-        self.shipping_amount = shipping_amount
-        self.total_amount = total_amount
+        self.subtotal = pricing["subtotal"]
+        self.tax_amount = pricing["tax"]
+        self.shipping_amount = pricing["shipping"]
+        self.total_amount = pricing["total"]
 
         self.save(update_fields=[
             "subtotal",

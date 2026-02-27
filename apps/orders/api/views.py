@@ -11,9 +11,6 @@ from ..services import OrderService
 from ..models import Order
 from .serializers import OrderSerializer, CheckoutSerializer,AdminOrderStatusUpdateSerializer
 
-
-
-
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 

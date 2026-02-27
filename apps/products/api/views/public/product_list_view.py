@@ -1,18 +1,25 @@
+# apps/products/api/views/public/product_list_view.py
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 
-from django.db.models import Prefetch, Min
-
-from drf_spectacular.utils import (
-    extend_schema,
-
+from django.db.models import (
+    Prefetch,
+    Q,
+    OuterRef,
+    Subquery,
+    F,
+    ExpressionWrapper,
+    DecimalField,
 )
+
+from drf_spectacular.utils import extend_schema
 
 from apps.products.models import Product, ProductVariant, ProductImage
 from apps.products.api.serializers.product_list_serializer import (
-    ProductListSerializer
+    ProductListSerializer,
 )
 from apps.wishlist.models import WishlistItem
 from apps.cart.models import CartItem
@@ -28,9 +35,9 @@ class ProductListAPIView(APIView):
     )
     def get(self, request):
 
-        # -------------------------
+        # --------------------------------------------------
         # Base Query
-        # -------------------------
+        # --------------------------------------------------
         queryset = (
             Product.objects
             .filter(is_active=True)
@@ -51,68 +58,89 @@ class ProductListAPIView(APIView):
 
         params = request.query_params
 
-        # -------------------------
+        # --------------------------------------------------
         # Category Filter
-        # -------------------------
+        # --------------------------------------------------
         if category := params.get("category"):
             queryset = queryset.filter(
                 category__slug__iexact=category
             )
 
-        # -------------------------
+        # --------------------------------------------------
         # Size Filter
-        # -------------------------
+        # --------------------------------------------------
         if size := params.get("size"):
             queryset = queryset.filter(
                 variants__size__iexact=size,
-                variants__is_active=True
+                variants__is_active=True,
             ).distinct()
 
-        # -------------------------
-        # Price Filters
-        # -------------------------
+        # --------------------------------------------------
+        # PRICE FILTER (REAL FIX - DB LEVEL)
+        # --------------------------------------------------
         min_price = params.get("min_price")
         max_price = params.get("max_price")
 
-        if min_price:
-            queryset = queryset.filter(
-                variants__selling_price__gte=min_price,
-                variants__is_active=True
+        if min_price or max_price:
+
+            # selling_price = price - (price * discount_percent / 100)
+            selling_price_expression = ExpressionWrapper(
+                F("variants__price")
+                - (F("variants__price") * F("variants__discount_percent") / 100),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
             )
 
-        if max_price:
-            queryset = queryset.filter(
-                variants__selling_price__lte=max_price,
-                variants__is_active=True
+            queryset = queryset.annotate(
+                calculated_selling_price=selling_price_expression
             )
 
-        # -------------------------
+            if min_price:
+                queryset = queryset.filter(
+                    calculated_selling_price__gte=min_price,
+                    variants__is_active=True,
+                )
+
+            if max_price:
+                queryset = queryset.filter(
+                    calculated_selling_price__lte=max_price,
+                    variants__is_active=True,
+                )
+
+            queryset = queryset.distinct()
+
+        # --------------------------------------------------
         # Sorting
-        # -------------------------
+        # --------------------------------------------------
         sort = params.get("sort")
 
         if sort == "newest":
             queryset = queryset.order_by("-created_at")
 
-        elif sort == "price_asc":
-            queryset = queryset.annotate(
-                min_price=Min(
-                    "variants__selling_price",
-                    filter=models.Q(variants__is_active=True)
-                )
-            ).order_by("min_price")
+        elif sort in ["price_asc", "price_desc"]:
 
-        elif sort == "price_desc":
-            queryset = queryset.annotate(
-                min_price=Min(
-                    "variants__selling_price",
-                    filter=models.Q(variants__is_active=True)
+            lowest_price_subquery = ProductVariant.objects.filter(
+                product=OuterRef("pk"),
+                is_active=True,
+            ).annotate(
+                selling_price=ExpressionWrapper(
+                    F("price")
+                    - (F("price") * F("discount_percent") / 100),
+                    output_field=DecimalField(max_digits=10, decimal_places=2),
                 )
-            ).order_by("-min_price")
+            ).order_by("selling_price").values("selling_price")[:1]
 
-        # -------------------------
+            queryset = queryset.annotate(
+                min_price=Subquery(lowest_price_subquery)
+            )
+
+            if sort == "price_asc":
+                queryset = queryset.order_by("min_price")
+            else:
+                queryset = queryset.order_by("-min_price")
+
+        # --------------------------------------------------
         # Wishlist & Cart
-        # -------------------------
+        # --------------------------------------------------
         if request.user.is_authenticated:
             wishlist_variant_ids = set(
                 WishlistItem.objects.filter(
@@ -129,9 +157,9 @@ class ProductListAPIView(APIView):
             wishlist_variant_ids = set()
             cart_variant_ids = set()
 
-        # -------------------------
+        # --------------------------------------------------
         # Serialize
-        # -------------------------
+        # --------------------------------------------------
         serializer = ProductListSerializer(
             queryset.distinct(),
             many=True,

@@ -28,7 +28,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "primary_image",
             "secondary_image",
             "price",
-            "variant_id",   # ✅ added here
+            "variant_id",
             "is_new_arrival",
             "is_top_selling",
             "in_stock",
@@ -39,14 +39,25 @@ class ProductListSerializer(serializers.ModelSerializer):
     # -------------------------
     # Helper Method
     # -------------------------
-    def _get_active_variants(self, obj):
-        return [v for v in obj.variants.all() if v.is_active]
+    def _get_default_variant(self, obj):
+        active_variants = [
+            v for v in obj.variants.all()
+            if v.is_active
+        ]
 
-    def _get_cheapest_variant(self, obj):
-        active_variants = self._get_active_variants(obj)
         if not active_variants:
             return None
-        return min(active_variants, key=lambda v: v.selling_price)
+
+        # Variants with stock
+        in_stock_variants = [
+            v for v in active_variants
+            if hasattr(v, "inventory") and v.inventory.available_stock > 0
+        ]
+
+        # Prefer in-stock variants
+        variants_to_consider = in_stock_variants if in_stock_variants else active_variants
+
+        return min(variants_to_consider, key=lambda v: v.selling_price)
 
     # -------------------------
     # Images
@@ -69,33 +80,35 @@ class ProductListSerializer(serializers.ModelSerializer):
     # Price
     # -------------------------
     def get_price(self, obj):
-        cheapest_variant = self._get_cheapest_variant(obj)
-        return cheapest_variant.selling_price if cheapest_variant else None
+        variant = self._get_default_variant(obj)
+        return variant.selling_price if variant else None
 
     # -------------------------
-    # Variant ID (Cheapest Active Variant)
+    # Variant ID (Default Variant)
     # -------------------------
     def get_variant_id(self, obj):
-        cheapest_variant = self._get_cheapest_variant(obj)
-        return cheapest_variant.id if cheapest_variant else None
+        variant = self._get_default_variant(obj)
+        return variant.id if variant else None
 
     # -------------------------
     # Stock
     # -------------------------
     def get_in_stock(self, obj):
-        active_variants = self._get_active_variants(obj)
-
-        return any(
-            hasattr(v, "inventory") and v.inventory.available_stock > 0
-            for v in active_variants
-        )
+        variant = self._get_default_variant(obj)
+        return (
+            hasattr(variant, "inventory") and
+            variant.inventory.available_stock > 0
+        ) if variant else False
 
     # -------------------------
     # Wishlist
     # -------------------------
     def get_is_in_wishlist(self, obj):
         wishlist_variant_ids = self.context.get("wishlist_variant_ids", set())
-        active_variants = self._get_active_variants(obj)
+        active_variants = [
+            v for v in obj.variants.all()
+            if v.is_active
+        ]
 
         return any(
             v.id in wishlist_variant_ids
@@ -107,7 +120,10 @@ class ProductListSerializer(serializers.ModelSerializer):
     # -------------------------
     def get_is_in_cart(self, obj):
         cart_variant_ids = self.context.get("cart_variant_ids", set())
-        active_variants = self._get_active_variants(obj)
+        active_variants = [
+            v for v in obj.variants.all()
+            if v.is_active
+        ]
 
         return any(
             v.id in cart_variant_ids

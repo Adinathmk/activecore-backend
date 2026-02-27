@@ -12,10 +12,6 @@ from ...serializers import OrderSerializer, CheckoutSerializer, AccountOverviewS
 
 from django.db.models import Count, Sum, Q
 
-
-
-
-
 class CheckoutView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -26,17 +22,29 @@ class CheckoutView(APIView):
             201: OrderSerializer,
             400: OpenApiResponse(description="Validation error"),
         },
-        description="Create an order from the authenticated user's cart."
+        description="Checkout from cart OR buy single product directly.",
     )
     def post(self, request):
         serializer = CheckoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        order = OrderService.create_order(
-            user=request.user,
-            shipping_address=serializer.validated_data["shipping_address"],
-            billing_address=serializer.validated_data["billing_address"],
-        )
+        variant_id = serializer.validated_data.get("variant_id")
+        quantity = serializer.validated_data.get("quantity")
+
+        if variant_id:
+            order = OrderService.create_single_product_order(
+                user=request.user,
+                variant_id=variant_id,
+                quantity=quantity,
+                shipping_address=serializer.validated_data["shipping_address"],
+                billing_address=serializer.validated_data["billing_address"],
+            )
+        else:
+            order = OrderService.create_order(
+                user=request.user,
+                shipping_address=serializer.validated_data["shipping_address"],
+                billing_address=serializer.validated_data["billing_address"],
+            )
 
         return Response(
             OrderSerializer(order).data,
@@ -55,7 +63,11 @@ class OrderListView(APIView):
         description="Retrieve all orders for the authenticated user."
     )
     def get(self, request):
-        orders = request.user.orders.all()
+        orders = (
+            request.user.orders
+            .prefetch_related("items")
+            .order_by("-placed_at")
+        )
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data)
 

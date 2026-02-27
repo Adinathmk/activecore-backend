@@ -2,13 +2,15 @@
 from django.db.models import Prefetch, Q
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny
+# from django.utils.decorators import method_decorator
+# from django.views.decorators.cache import cache_page
 
 from apps.products.models import Product, ProductImage
 from apps.products.api.serializers.featured_product_serializer import (
     FeaturedProductSerializer,
 )
 
-
+# @method_decorator(cache_page(60 * 10), name="dispatch")
 class FeaturedProductListView(ListAPIView):
     serializer_class = FeaturedProductSerializer
     permission_classes = [AllowAny]

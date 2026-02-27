@@ -1,11 +1,21 @@
 from django.db import transaction
 from decimal import Decimal
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 from apps.cart.models import CartItem
-from apps.products.models import ProductImage, ProductVariant
-from .models import Order, OrderItem, OrderStatus, OrderStatusHistory
+from apps.products.models import ProductVariant
+from .models import (
+    Order,
+    OrderItem,
+    OrderStatus,
+    OrderStatusHistory
+)
+from core.pricing import PricingEngine
 
 
-
+# --------------------------------------------------------------------------
+# STATUS TRANSITION RULES
+# --------------------------------------------------------------------------
 
 ALLOWED_TRANSITIONS = {
     "PENDING": ["CONFIRMED", "FAILED", "CANCELLED"],
@@ -18,9 +28,16 @@ ALLOWED_TRANSITIONS = {
     "REFUNDED": [],
 }
 
-    #--------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------
+# ORDER SERVICE
+# --------------------------------------------------------------------------
 
 class OrderService:
+
+    # ----------------------------------------------------------------------
+    # GET PRIMARY IMAGE
+    # ----------------------------------------------------------------------
 
     @staticmethod
     def _get_primary_image(product):
@@ -32,52 +49,47 @@ class OrderService:
         if first_image:
             return first_image.image_url
 
-        return ""  
-    
+        return ""
 
-    #--------------------------------------------------------------------------
+    # ----------------------------------------------------------------------
+    # CORE ENGINE (USED BY BOTH CART + BUY NOW)
+    # ----------------------------------------------------------------------
 
     @staticmethod
     @transaction.atomic
-    def create_order(user, shipping_address, billing_address):
-
-        cart_items = (
-            CartItem.objects
-            .select_related("variant", "variant__product")   # safe here (no FOR UPDATE)
-            .filter(cart__user=user)
-        )
-
-        if not cart_items.exists():
-            raise Exception("Cart is empty")
+    def _create_order_from_items(user, items, shipping_address, billing_address):
 
         subtotal = Decimal("0.00")
-        order_items = []
+        order_items_data = []
 
-        for item in cart_items:
-
-            # 🔒 Lock only variant row
-            variant = ProductVariant.objects.select_for_update().get(id=item.variant.id)
+        for entry in items:
+            variant = ProductVariant.objects.select_for_update().get(
+                id=entry["variant"].id
+            )
 
             inventory = variant.inventory
             product = variant.product
+            quantity = entry["quantity"]
 
-            if inventory.available_stock < item.quantity:
-                raise Exception(f"{product.name} ({variant.size}) is out of stock")
+            if inventory.available_stock < quantity:
+                raise ValidationError(
+                    f"{product.name} ({variant.size}) is out of stock"
+                )
 
             # Reserve stock
-            inventory.reserved += item.quantity
+            inventory.reserved += quantity
             inventory.save(update_fields=["reserved"])
 
             unit_price = variant.price
             discount_percent = variant.discount_percent
             final_price = variant.selling_price
 
-            total_price = final_price * item.quantity
+            total_price = final_price * quantity
             subtotal += total_price
 
             image_url = OrderService._get_primary_image(product)
 
-            order_items.append({
+            order_items_data.append({
                 "product_id": product.id,
                 "product_name": product.name,
 
@@ -91,13 +103,18 @@ class OrderService:
                 "discount_percent": discount_percent,
                 "final_unit_price": final_price,
 
-                "quantity": item.quantity,
+                "quantity": quantity,
                 "total_price": total_price,
             })
 
-        tax = Decimal("0.00")
-        shipping = Decimal("0.00")
-        discount = Decimal("0.00")
+        pricing = PricingEngine.calculate(subtotal)
+
+        tax = pricing["tax"]
+        shipping = pricing["shipping"]
+        discount = pricing["discount"]
+        total = pricing["total"]
+
+        total = subtotal + tax + shipping - discount
 
         total = subtotal + tax + shipping - discount
 
@@ -113,28 +130,102 @@ class OrderService:
             status=OrderStatus.PENDING
         )
 
-        for item in order_items:
+        for item in order_items_data:
             OrderItem.objects.create(order=order, **item)
 
+        return order
+
+    # ----------------------------------------------------------------------
+    # CART CHECKOUT
+    # ----------------------------------------------------------------------
+
+    @staticmethod
+    @transaction.atomic
+    def create_order(user, shipping_address, billing_address):
+
+        cart_items = (
+            CartItem.objects
+            .select_related("variant", "variant__product")
+            .filter(cart__user=user)
+        )
+
+        if not cart_items.exists():
+            raise ValidationError("Cart is empty")
+
+        items = [
+            {
+                "variant": item.variant,
+                "quantity": item.quantity
+            }
+            for item in cart_items
+        ]
+
+        order = OrderService._create_order_from_items(
+            user=user,
+            items=items,
+            shipping_address=shipping_address,
+            billing_address=billing_address
+        )
+
+        # Clear cart after order creation
         cart_items.delete()
 
         return order
-    
-    #--------------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # BUY NOW (SINGLE PRODUCT CHECKOUT)
+    # ----------------------------------------------------------------------
+
+    @staticmethod
+    @transaction.atomic
+    def create_single_product_order(
+        user,
+        variant_id,
+        quantity,
+        shipping_address,
+        billing_address
+    ):
+
+        variant = get_object_or_404(
+            ProductVariant.objects.select_related("product"),
+            id=variant_id
+        )
+
+        items = [{
+            "variant": variant,
+            "quantity": quantity
+        }]
+
+        return OrderService._create_order_from_items(
+            user=user,
+            items=items,
+            shipping_address=shipping_address,
+            billing_address=billing_address
+        )
+
+    # ----------------------------------------------------------------------
+    # CANCEL ORDER
+    # ----------------------------------------------------------------------
 
     @staticmethod
     @transaction.atomic
     def cancel_order(order, user):
 
         if not order.can_cancel():
-            raise Exception("Order cannot be cancelled")
+            raise ValidationError("Order cannot be cancelled")
 
         for item in order.items.select_for_update():
-            variant = ProductVariant.objects.select_for_update().get(id=item.variant_id)
+            variant = ProductVariant.objects.select_for_update().get(
+                id=item.variant_id
+            )
+
             inventory = variant.inventory
 
-            # release reserved
-            inventory.reserved -= item.quantity
+            # Release reserved stock safely
+            inventory.reserved = max(
+                0,
+                inventory.reserved - item.quantity
+            )
             inventory.save(update_fields=["reserved"])
 
         old_status = order.status
@@ -149,15 +240,17 @@ class OrderService:
         )
 
         return order
-    
-    #--------------------------------------------------------------------------
+
+    # ----------------------------------------------------------------------
+    # UPDATE ORDER STATUS (ADMIN / SYSTEM)
+    # ----------------------------------------------------------------------
 
     @staticmethod
     @transaction.atomic
     def update_status(order: Order, new_status: str, changed_by):
 
         if new_status not in ALLOWED_TRANSITIONS.get(order.status, []):
-            raise ValueError(
+            raise ValidationError(
                 f"Invalid status transition from {order.status} to {new_status}"
             )
 
@@ -169,7 +262,10 @@ class OrderService:
             order=order,
             old_status=old_status,
             new_status=new_status,
-            changed_by=changed_by,
+            changed_by=changed_by
         )
 
         return order
+    
+
+
