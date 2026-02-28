@@ -124,3 +124,29 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.full_name} - {self.city}"
+
+
+# ------------------------------------------------------------------------------------------------
+
+
+import uuid
+from datetime import timedelta
+from django.utils import timezone
+from django.conf import settings
+
+class EmailOTP(models.Model):
+
+    OTP_TYPES = (
+        ("verify", "Verify Account"),
+        ("reset", "Password Reset"),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp_hash = models.CharField(max_length=128)
+    otp_type = models.CharField(max_length=10, choices=OTP_TYPES)
+    attempts = models.IntegerField(default=0)
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(minutes=5)
