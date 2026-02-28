@@ -35,6 +35,9 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
+    "cloudinary",
+    "cloudinary_storage",
+
 
 
     'apps.accounts.apps.AccountsConfig',
@@ -45,6 +48,13 @@ INSTALLED_APPS = [
 
 ]
 
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": env("CLOUDINARY_API_KEY"),
+    "API_SECRET": env("CLOUDINARY_API_SECRET"),
+}
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",   
     'django.middleware.security.SecurityMiddleware',
@@ -99,7 +109,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 #Rest framework
 REST_FRAMEWORK = {
