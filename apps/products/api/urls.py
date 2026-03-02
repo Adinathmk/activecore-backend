@@ -7,6 +7,7 @@ from .views.admin.admin_product_list_create_view import AdminProductListCreateAP
 from .views.admin.admin_product_retrieve_update_delete_view import AdminProductRetrieveUpdateDeleteAPIView
 from .views.public.product_rating_view import ProductRatingAPIView
 from .views.public.featured_product_list_view import FeaturedProductListView
+from .views.public.product_search_view import ProductSearchAPIView
 
 app_name = "products"
 
@@ -21,5 +22,6 @@ urlpatterns = [
     path("<slug:slug>/", ProductDetailAPIView.as_view(), name="product-detail"),
     path("<slug:slug>/rate/",ProductRatingAPIView.as_view(),name="product-rate",),
     path("home/featured/",FeaturedProductListView.as_view(),name="home-featured-products",),
+    path("search/", ProductSearchAPIView.as_view(), name="product-search"),
 
 ]

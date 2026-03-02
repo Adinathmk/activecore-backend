@@ -5,7 +5,7 @@ from django.db.models import Q
 
 
 class Category(SlugMixin):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100,db_index=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -19,7 +19,7 @@ class Category(SlugMixin):
 
 
 class ProductType(SlugMixin):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50,db_index=True)
     is_active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
@@ -34,7 +34,7 @@ class ProductType(SlugMixin):
 #-----------------------------------------------------------------------
 
 class Product(SlugMixin):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255,db_index=True)
     description = models.TextField()
 
     category = models.ForeignKey(Category, on_delete=models.PROTECT)

@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta  
 
 
 class OrderStatus(models.TextChoices):
@@ -22,6 +24,8 @@ class Order(models.Model):
         on_delete=models.PROTECT,
         related_name="orders"
     )
+
+    expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     status = models.CharField(
         max_length=20,
@@ -51,6 +55,11 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.id}"
+    
+    def is_expired(self):
+        return self.status == OrderStatus.PENDING and \
+               self.expires_at and \
+               timezone.now() > self.expires_at
 
 
 class OrderItem(models.Model):
@@ -96,3 +105,36 @@ class OrderStatusHistory(models.Model):
         on_delete=models.SET_NULL
     )
     changed_at = models.DateTimeField(auto_now_add=True)
+
+
+class PaymentStatus(models.TextChoices):
+    CREATED = "CREATED", "Created"
+    SUCCEEDED = "SUCCEEDED", "Succeeded"
+    FAILED = "FAILED", "Failed"
+
+
+class Payment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="payment"
+    )
+
+    stripe_payment_intent_id = models.CharField(max_length=255, unique=True)
+    amount = models.PositiveBigIntegerField()  
+    currency = models.CharField(max_length=10, default="INR")
+
+    status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.CREATED
+    )
+
+    raw_response = models.JSONField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.order.id} - {self.status}"

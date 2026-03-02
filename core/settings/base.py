@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 import environ
+import stripe
 
 # Base Directory
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -171,3 +172,7 @@ EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+stripe.api_key = STRIPE_SECRET_KEY
