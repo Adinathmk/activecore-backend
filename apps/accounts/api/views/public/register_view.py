@@ -8,6 +8,7 @@ from apps.accounts.api.serializers.register_serializer import RegisterSerializer
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = [] 
 
     @extend_schema(
         request=RegisterSerializer,

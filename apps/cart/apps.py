@@ -5,4 +5,7 @@ class CartConfig(AppConfig):
     name = 'apps.cart'
     label='cart'
 
+    def ready(self):
+        import apps.cart.signals
+
 
