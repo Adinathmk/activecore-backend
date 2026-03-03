@@ -23,6 +23,10 @@ class CheckoutSerializer(serializers.Serializer):
 
     variant_id = serializers.IntegerField(required=False)
     quantity = serializers.IntegerField(required=False, min_value=1)
+    payment_method = serializers.ChoiceField(
+    choices=["ONLINE", "COD"],
+    required=True
+    )
 
     def validate(self, data):
         if data.get("variant_id") and not data.get("quantity"):
@@ -39,7 +43,7 @@ class AdminOrderStatusUpdateSerializer(serializers.Serializer):
 
 class AccountOverviewSerializer(serializers.Serializer):
     total_orders = serializers.IntegerField()
-    pending_orders = serializers.IntegerField()
+    confirmed_orders= serializers.IntegerField()
     delivered_orders = serializers.IntegerField()
     cancelled_orders = serializers.IntegerField()
     total_spent = serializers.DecimalField(max_digits=12, decimal_places=2)

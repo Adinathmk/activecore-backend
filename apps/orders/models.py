@@ -15,6 +15,10 @@ class OrderStatus(models.TextChoices):
     FAILED = "FAILED", "Payment Failed"
     REFUNDED = "REFUNDED", "Refunded"
 
+class PaymentMethod(models.TextChoices):
+    ONLINE = "ONLINE", "Online Payment"
+    COD = "COD", "Cash On Delivery"
+
 
 class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -49,6 +53,13 @@ class Order(models.Model):
 
     placed_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.ONLINE
+    )
+
+    is_paid = models.BooleanField(default=False)
 
     def can_cancel(self):
         return self.status in ["PENDING", "CONFIRMED"]
@@ -138,3 +149,4 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.order.id} - {self.status}"
+    

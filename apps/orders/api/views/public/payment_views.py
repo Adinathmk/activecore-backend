@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 
 from drf_spectacular.utils import (
@@ -22,10 +23,10 @@ class CreatePaymentIntentView(APIView):
         summary="Create Stripe PaymentIntent",
         description=(
             "Creates a Stripe PaymentIntent for the specified order. "
-            "Order must be in PENDING state. "
+            "Order must be eligible for online payment. "
             "Returns clientSecret used by frontend to confirm payment."
         ),
-        request=None,  # No request body required
+        request=None,
         responses={
             200: OpenApiResponse(
                 description="Client secret returned successfully",
@@ -39,11 +40,11 @@ class CreatePaymentIntentView(APIView):
                 ],
             ),
             400: OpenApiResponse(
-                description="Invalid order state",
+                description="Invalid order state or payment not allowed",
                 examples=[
                     OpenApiExample(
-                        "Already Paid",
-                        value={"error": "Payment already processed"},
+                        "Invalid Order",
+                        value={"error": "Order is not eligible for payment"},
                     )
                 ],
             ),
@@ -53,14 +54,27 @@ class CreatePaymentIntentView(APIView):
     def post(self, request, pk):
         order = get_object_or_404(Order, pk=pk, user=request.user)
 
-        if order.status != "PENDING":
+        try:
+            intent = StripeService.create_payment_intent(order)
+
+        except ValidationError as e:
+            # Handles COD, expired, already processed etc.
+            error_message = (
+                e.detail[0] if hasattr(e, "detail") else str(e)
+            )
+
             return Response(
-                {"error": "Payment already processed"},
+                {"error": error_message},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        intent = StripeService.create_payment_intent(order)
+        except Exception:
+            return Response(
+                {"error": "Unable to create payment intent"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        return Response({
-            "clientSecret": intent.client_secret
-        })
+        return Response(
+            {"clientSecret": intent.client_secret},
+            status=status.HTTP_200_OK
+        )

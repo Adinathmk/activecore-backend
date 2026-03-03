@@ -14,6 +14,7 @@ from .models import (
     OrderStatusHistory,
     Payment,
     PaymentStatus,
+    PaymentMethod,
 )
 
 from core.pricing import PricingEngine
@@ -68,7 +69,7 @@ class OrderService:
 
     @staticmethod
     @transaction.atomic
-    def _create_order_from_items(user, items, shipping_address, billing_address):
+    def _create_order_from_items(user, items, shipping_address, billing_address,payment_method):
 
         subtotal = Decimal("0.00")
         order_items_data = []
@@ -81,6 +82,7 @@ class OrderService:
             inventory = variant.inventory
             product = variant.product
             quantity = entry["quantity"]
+            
 
             if inventory.available_stock < quantity:
                 raise ValidationError(
@@ -133,8 +135,17 @@ class OrderService:
             shipping_address=shipping_address,
             billing_address=billing_address,
             status=OrderStatus.PENDING,
-            expires_at=timezone.now() + timedelta(minutes=1)  # 🔥 Expiry
+            expires_at=timezone.now() + timedelta(minutes=10),
+            payment_method=payment_method,
+            is_paid=False,
         )
+
+        # ✅ COD LOGIC
+        if payment_method == PaymentMethod.COD:
+            order.status = OrderStatus.CONFIRMED
+            order.is_paid = False
+            order.expires_at = None  # COD should not expire
+            order.save(update_fields=["status", "is_paid", "expires_at"])
 
         for item in order_items_data:
             OrderItem.objects.create(order=order, **item)
@@ -147,7 +158,7 @@ class OrderService:
 
     @staticmethod
     @transaction.atomic
-    def create_order(user, shipping_address, billing_address):
+    def create_order(user, shipping_address, billing_address, payment_method):
 
         cart_items = (
             CartItem.objects
@@ -170,7 +181,8 @@ class OrderService:
             user=user,
             items=items,
             shipping_address=shipping_address,
-            billing_address=billing_address
+            billing_address=billing_address,
+            payment_method=payment_method
         )
 
         cart_items.delete()
@@ -187,7 +199,8 @@ class OrderService:
         variant_id,
         quantity,
         shipping_address,
-        billing_address
+        billing_address,
+        payment_method
     ):
 
         variant = get_object_or_404(
@@ -204,8 +217,10 @@ class OrderService:
             user=user,
             items=items,
             shipping_address=shipping_address,
-            billing_address=billing_address
+            billing_address=billing_address,
+            payment_method=payment_method            
         )
+    
 
     # ----------------------------------------------------------------------
     # CANCEL ORDER (MANUAL)
@@ -264,25 +279,31 @@ class OrderService:
             .prefetch_related("items")
             .filter(
                 status=OrderStatus.PENDING,
-                expires_at__lt=now
+                expires_at__lt=now,
+                is_paid=False
             )
         )
 
         for order in expired_orders:
 
-            # Cancel Stripe PaymentIntent
-            if hasattr(order, "payment"):
+            # Cancel Stripe PaymentIntent (only for ONLINE)
+            if order.payment_method == PaymentMethod.ONLINE and hasattr(order, "payment"):
                 try:
                     stripe.PaymentIntent.cancel(
                         order.payment.stripe_payment_intent_id
                     )
+
+                    order.payment.status = PaymentStatus.FAILED
+                    order.payment.save(update_fields=["status"])
+
                 except Exception:
                     pass
 
             OrderService._release_inventory(order)
 
             order.status = OrderStatus.CANCELLED
-            order.save(update_fields=["status"])
+            order.is_paid = False
+            order.save(update_fields=["status", "is_paid"])
 
 
 # --------------------------------------------------------------------------
@@ -293,6 +314,17 @@ class StripeService:
 
     @staticmethod
     def create_payment_intent(order):
+
+        # ❌ COD protection
+        if order.payment_method == PaymentMethod.COD:
+            raise ValidationError("COD orders do not require online payment.")
+
+        # ❌ Expired protection
+        if order.is_expired():
+            raise ValidationError("Order has expired.")
+
+        if order.status != OrderStatus.PENDING:
+            raise ValidationError("Order is not eligible for payment.")
 
         existing_payment = getattr(order, "payment", None)
 
@@ -341,11 +373,18 @@ class StripeService:
 
         order = Order.objects.select_for_update().get(id=order_id)
 
+        # If already processed → ignore
         if order.status == OrderStatus.CONFIRMED:
             return
 
+        # If expired → ignore success
+        if order.is_expired():
+            return
+
         order.status = OrderStatus.CONFIRMED
-        order.save(update_fields=["status"])
+        order.is_paid = True
+        order.expires_at = None
+        order.save(update_fields=["status", "is_paid", "expires_at"])
 
         payment = Payment.objects.get(
             stripe_payment_intent_id=payment_intent["id"]
@@ -364,13 +403,23 @@ class StripeService:
 
         if not order_id:
             return
+        
+        if order.status != OrderStatus.PENDING:
+            return
 
         order = Order.objects.select_for_update().get(id=order_id)
+
+        # If already processed → ignore
+        
+        # Only allow failure if still pending
+        if order.status != OrderStatus.PENDING:
+            return
 
         OrderService._release_inventory(order)
 
         order.status = OrderStatus.FAILED
-        order.save(update_fields=["status"])
+        order.is_paid = False
+        order.save(update_fields=["status", "is_paid"])
 
         payment = Payment.objects.get(
             stripe_payment_intent_id=payment_intent["id"]
