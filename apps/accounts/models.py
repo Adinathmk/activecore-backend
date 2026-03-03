@@ -6,11 +6,8 @@ import uuid
 from .managers import UserManager
 from cloudinary.models import CloudinaryField
 from django.core.validators import RegexValidator
-
-indian_phone_validator = RegexValidator(
-    regex=r'^[6-9]\d{9}$',
-    message="Enter a valid 10-digit Indian mobile number."
-)
+import phonenumbers
+from phonenumbers import NumberParseException
 
 
 class User(AbstractUser):
@@ -40,8 +37,7 @@ class User(AbstractUser):
 
     # Optional fields
     phone_number = models.CharField(
-        max_length=10,
-        validators=[indian_phone_validator],
+        max_length=15,
         blank=True,
         null=True
     )
@@ -69,6 +65,25 @@ class User(AbstractUser):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
+    
+    def save(self, *args, **kwargs):
+        if self.phone_number:
+            try:
+                parsed = phonenumbers.parse(self.phone_number, "IN")
+
+                if not phonenumbers.is_valid_number(parsed):
+                    raise ValueError("Invalid phone number")
+
+                # Convert to E.164 format
+                self.phone_number = phonenumbers.format_number(
+                    parsed,
+                    phonenumbers.PhoneNumberFormat.E164
+                )
+
+            except NumberParseException:
+                raise ValueError("Invalid phone number format")
+
+        super().save(*args, **kwargs)
 
 # -----------------------------------------------------------------------------------------------------------------------
 
@@ -134,16 +149,22 @@ from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
 
-class EmailOTP(models.Model):
 
-    OTP_TYPES = (
+class UserOTP(models.Model):
+    OTP_TYPE_CHOICES = (
         ("verify", "Verify Account"),
-        ("reset", "Password Reset"),
+        ("reset", "Reset Password"),
+    )
+
+    CHANNEL_CHOICES = (
+        ("email", "Email"),
+        ("whatsapp", "WhatsApp"),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    otp_hash = models.CharField(max_length=128)
-    otp_type = models.CharField(max_length=10, choices=OTP_TYPES)
+    otp_hash = models.CharField(max_length=255)
+    otp_type = models.CharField(max_length=20, choices=OTP_TYPE_CHOICES)
+    channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES)
     attempts = models.IntegerField(default=0)
     is_used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
