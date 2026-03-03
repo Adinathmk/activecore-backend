@@ -19,9 +19,9 @@ urlpatterns = [
     path("admin/<int:pk>/",AdminProductRetrieveUpdateDeleteAPIView.as_view(),name="admin-product-detail"),
     
     path("", ProductListAPIView.as_view(), name="product-list"),
+    path("search/", ProductSearchAPIView.as_view(), name="product-search"),
     path("<slug:slug>/", ProductDetailAPIView.as_view(), name="product-detail"),
     path("<slug:slug>/rate/",ProductRatingAPIView.as_view(),name="product-rate",),
     path("home/featured/",FeaturedProductListView.as_view(),name="home-featured-products",),
-    path("search/", ProductSearchAPIView.as_view(), name="product-search"),
 
 ]
