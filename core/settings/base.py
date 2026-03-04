@@ -114,6 +114,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 #Rest framework
 REST_FRAMEWORK = {
+    "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.StandardResultsPagination",
+    "PAGE_SIZE": 12,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "apps.accounts.authentication.CookieJWTAuthentication",

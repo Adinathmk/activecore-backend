@@ -5,9 +5,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework import status
 
+from apps.common.pagination import StandardResultsPagination
+
 from django.db.models import (
     Prefetch,
-    Q,
     OuterRef,
     Subquery,
     F,
@@ -18,9 +19,7 @@ from django.db.models import (
 from drf_spectacular.utils import extend_schema
 
 from apps.products.models import Product, ProductVariant, ProductImage
-from apps.products.api.serializers.product_list_serializer import (
-    ProductListSerializer,
-)
+from apps.products.api.serializers.product_list_serializer import ProductListSerializer
 from apps.wishlist.models import WishlistItem
 from apps.cart.models import CartItem
 
@@ -30,7 +29,7 @@ class ProductListAPIView(APIView):
 
     @extend_schema(
         tags=["products"],
-        summary="List products with filters and sorting",
+        summary="List products with filters, sorting and pagination",
         responses={200: ProductListSerializer(many=True)},
     )
     def get(self, request):
@@ -62,9 +61,7 @@ class ProductListAPIView(APIView):
         # Category Filter
         # --------------------------------------------------
         if category := params.get("category"):
-            queryset = queryset.filter(
-                category__slug__iexact=category
-            )
+            queryset = queryset.filter(category__slug__iexact=category)
 
         # --------------------------------------------------
         # Size Filter
@@ -76,14 +73,13 @@ class ProductListAPIView(APIView):
             ).distinct()
 
         # --------------------------------------------------
-        # PRICE FILTER (REAL FIX - DB LEVEL)
+        # Price Filter (DB Level)
         # --------------------------------------------------
         min_price = params.get("min_price")
         max_price = params.get("max_price")
 
         if min_price or max_price:
 
-            # selling_price = price - (price * discount_percent / 100)
             selling_price_expression = ExpressionWrapper(
                 F("variants__price")
                 - (F("variants__price") * F("variants__discount_percent") / 100),
@@ -142,6 +138,7 @@ class ProductListAPIView(APIView):
         # Wishlist & Cart
         # --------------------------------------------------
         if request.user.is_authenticated:
+
             wishlist_variant_ids = set(
                 WishlistItem.objects.filter(
                     wishlist__user=request.user
@@ -153,15 +150,27 @@ class ProductListAPIView(APIView):
                     cart__user=request.user
                 ).values_list("variant_id", flat=True)
             )
+
         else:
             wishlist_variant_ids = set()
             cart_variant_ids = set()
 
         # --------------------------------------------------
+        # Pagination
+        # --------------------------------------------------
+        paginator = StandardResultsPagination()
+
+        paginated_queryset = paginator.paginate_queryset(
+            queryset.distinct(),
+            request,
+            view=self
+        )
+
+        # --------------------------------------------------
         # Serialize
         # --------------------------------------------------
         serializer = ProductListSerializer(
-            queryset.distinct(),
+            paginated_queryset,
             many=True,
             context={
                 "request": request,
@@ -170,4 +179,4 @@ class ProductListAPIView(APIView):
             },
         )
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return paginator.get_paginated_response(serializer.data)
