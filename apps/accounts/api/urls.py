@@ -9,6 +9,7 @@ from .views.admin.admin_user_action import (
 )
 from .views.admin.admin_user_list import AdminUserListView
 from .views.admin.admin_user_detail import AdminUserDetailView
+from .views.admin.admin_user_search import AdminUserSearchByNameView
 from .views.public.me_view import MeView
 from .views.public.otp_view import VerifyOTPView,SendOTPView,ResetPasswordView,ForgotPasswordView
 
@@ -31,6 +32,7 @@ urlpatterns = [
 
 
     path("admin/users/", AdminUserListView.as_view()),
+    path("admin/users/search/", AdminUserSearchByNameView.as_view()),
     path("admin/users/<uuid:pk>/", AdminUserDetailView.as_view()),
     path("admin/users/<uuid:pk>/block/", AdminUserBlockToggleView.as_view()),
     path("admin/users/<uuid:pk>/delete/", AdminUserDeleteView.as_view()),

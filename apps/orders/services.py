@@ -306,6 +306,35 @@ class OrderService:
             order.save(update_fields=["status", "is_paid"])
 
 
+        # -------------------------------------------------------------
+
+    @staticmethod
+    @transaction.atomic
+    def update_status(order, new_status, changed_by=None):
+
+        current_status = order.status
+
+        allowed = ALLOWED_TRANSITIONS.get(current_status, [])
+
+        if new_status not in allowed:
+            raise ValidationError(
+                f"Invalid transition from {current_status} to {new_status}"
+            )
+
+        old_status = order.status
+        order.status = new_status
+        order.save(update_fields=["status"])
+
+        # Track history
+        OrderStatusHistory.objects.create(
+            order=order,
+            old_status=old_status,
+            new_status=new_status,
+            changed_by=changed_by
+        )
+
+        return order
+
 # --------------------------------------------------------------------------
 # STRIPE SERVICE
 # --------------------------------------------------------------------------
