@@ -35,7 +35,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         child=serializers.CharField(),
         required=False
     )
-    variants = VariantCreateSerializer(many=True)
+    variants = VariantCreateSerializer(many=True, required=False)
 
     class Meta:
         model = Product
@@ -76,6 +76,8 @@ class ProductCreateSerializer(serializers.ModelSerializer):
 
 
     def validate_variants(self, value):
+        if not value:
+            return value
         sizes = [v["size"] for v in value]
         if len(sizes) != len(set(sizes)):
             raise serializers.ValidationError(
@@ -88,7 +90,7 @@ class ProductCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         images_data = validated_data.pop("images")
         features_data = validated_data.pop("features", [])
-        variants_data = validated_data.pop("variants")
+        variants_data = validated_data.pop("variants", [])
 
 
         product = Product.objects.create(**validated_data)

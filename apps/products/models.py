@@ -118,12 +118,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class ProductVariant(models.Model):
 
     SIZE_CHOICES = [
-        ("XS", "Extra Small"),
         ("S", "Small"),
         ("M", "Medium"),
         ("L", "Large"),
         ("XL", "Extra Large"),
-        ("XXL", "Extra Extra Large"),
     ]
 
     product = models.ForeignKey(

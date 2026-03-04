@@ -22,22 +22,20 @@ class VariantUpdateSerializer(serializers.Serializer):
     stock = serializers.IntegerField(min_value=0)
 
 
-
 class ImageUpdateSerializer(serializers.Serializer):
     image_url = serializers.URLField()
     is_primary = serializers.BooleanField(default=False)
     is_secondary = serializers.BooleanField(default=False)
 
 
-
 class ProductFullUpdateSerializer(serializers.ModelSerializer):
 
-    images = ImageUpdateSerializer(many=True)
+    images = ImageUpdateSerializer(many=True, required=False)
     features = serializers.ListField(
         child=serializers.CharField(),
         required=False
     )
-    variants = VariantUpdateSerializer(many=True)
+    variants = VariantUpdateSerializer(many=True, required=False)
 
     class Meta:
         model = Product
@@ -55,18 +53,21 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
             "variants",
         )
 
+    # -------------------------
+    # VALIDATIONS
+    # -------------------------
+
     def validate_is_featured(self, value):
         if value:
             featured_count = Product.objects.filter(
                 is_featured=True
             ).exclude(id=self.instance.id if self.instance else None).count()
 
-            if featured_count >= 5:
+            if featured_count >= 4:
                 raise serializers.ValidationError(
                     "Maximum 4 featured products allowed."
                 )
         return value
-
 
     def validate_images(self, value):
         primary_count = sum(1 for img in value if img.get("is_primary"))
@@ -84,86 +85,107 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
 
         return value
 
+    # -------------------------
+    # UPDATE PRODUCT
+    # -------------------------
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        images_data = validated_data.pop("images")
-        features_data = validated_data.pop("features", [])
-        variants_data = validated_data.pop("variants")
 
-        
+        images_data = validated_data.pop("images", None)
+        features_data = validated_data.pop("features", None)
+        variants_data = validated_data.pop("variants", None)
+
+        # Update product fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
 
         instance.save()
 
-        
-        instance.images.all().delete()
+        # -------------------------
+        # UPDATE IMAGES
+        # -------------------------
 
-        for index, image in enumerate(images_data):
-            ProductImage.objects.create(
-                product=instance,
-                image_url=image["image_url"],
-                is_primary=image.get("is_primary", False),
-                is_secondary=image.get("is_secondary", False),
-                order=index
-            )
+        if images_data is not None:
+            instance.images.all().delete()
 
-
-        instance.features.all().delete()
-
-        for feature in features_data:
-            ProductFeature.objects.create(
-                product=instance,
-                text=feature
-            )
-
-        existing_variants = {
-            variant.size: variant
-            for variant in instance.variants.all()
-        }
-
-        submitted_sizes = []
-
-        for variant_data in variants_data:
-            size = variant_data["size"]
-            stock = variant_data.pop("stock")
-            submitted_sizes.append(size)
-
-            if size in existing_variants:
-                
-                variant = existing_variants[size]
-                variant.price = variant_data["price"]
-                variant.discount_percent = variant_data.get(
-                    "discount_percent", 0
-                )
-                variant.is_active = True
-                variant.save()
-
-                
-                if hasattr(variant, "inventory"):
-                    variant.inventory.stock = stock
-                    variant.inventory.save()
-                else:
-                    Inventory.objects.create(
-                        variant=variant,
-                        stock=stock
-                    )
-            else:
-                
-                new_variant = ProductVariant.objects.create(
+            for index, image in enumerate(images_data):
+                ProductImage.objects.create(
                     product=instance,
-                    **variant_data
-                )
-                Inventory.objects.update_or_create(
-                    variant=new_variant,
-                    stock=stock
+                    image_url=image["image_url"],
+                    is_primary=image.get("is_primary", False),
+                    is_secondary=image.get("is_secondary", False),
+                    order=index
                 )
 
-        
-        for size, variant in existing_variants.items():
-            if size not in submitted_sizes:
-                variant.is_active = False
-                variant.save(update_fields=["is_active"])
+        # -------------------------
+        # UPDATE FEATURES
+        # -------------------------
+
+        if features_data is not None:
+            instance.features.all().delete()
+
+            for feature in features_data:
+                ProductFeature.objects.create(
+                    product=instance,
+                    text=feature
+                )
+
+        # -------------------------
+        # UPDATE VARIANTS
+        # -------------------------
+
+        if variants_data is not None:
+
+            existing_variants = {
+                variant.size: variant
+                for variant in instance.variants.all()
+            }
+
+            submitted_sizes = []
+
+            for variant_data in variants_data:
+
+                size = variant_data["size"]
+                stock = variant_data.pop("stock")
+
+                submitted_sizes.append(size)
+
+                if size in existing_variants:
+
+                    variant = existing_variants[size]
+                    variant.price = variant_data["price"]
+                    variant.discount_percent = variant_data.get(
+                        "discount_percent", 0
+                    )
+                    variant.is_active = True
+                    variant.save()
+
+                    if hasattr(variant, "inventory"):
+                        variant.inventory.stock = stock
+                        variant.inventory.save()
+                    else:
+                        Inventory.objects.create(
+                            variant=variant,
+                            stock=stock
+                        )
+
+                else:
+
+                    new_variant = ProductVariant.objects.create(
+                        product=instance,
+                        **variant_data
+                    )
+
+                    Inventory.objects.update_or_create(
+                        variant=new_variant,
+                        defaults={"stock": stock}
+                    )
+
+            # deactivate removed variants
+            for size, variant in existing_variants.items():
+                if size not in submitted_sizes:
+                    variant.is_active = False
+                    variant.save(update_fields=["is_active"])
 
         return instance

@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 from apps.products.api.serializers.category_serializer import (
     CategorySerializer
 )
+from apps.products.models import Category
 
 
 class AdminCategoryCreateAPIView(APIView):
@@ -28,6 +29,17 @@ class AdminCategoryCreateAPIView(APIView):
             403: OpenApiResponse(description="Forbidden"),
         },
     )
+
+    @extend_schema(
+        tags=["product-admin"],
+        summary="List Categories",
+        description="Retrieves all product categories (Admin only).",
+        responses={200: CategorySerializer(many=True)},
+    )
+    def get(self, request):
+        categories = Category.objects.all()
+        serializer = CategorySerializer(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = CategorySerializer(data=request.data)

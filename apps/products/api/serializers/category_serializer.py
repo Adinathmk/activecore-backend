@@ -4,7 +4,7 @@ from apps.products.models import Category
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ("name", "slug")
+        fields = ("id", "name", "slug")
     
     def validate_name(self, value):
         if Category.objects.filter(name__iexact=value).exists():
