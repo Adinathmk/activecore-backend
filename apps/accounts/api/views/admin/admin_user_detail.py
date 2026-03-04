@@ -25,4 +25,4 @@ class AdminUserDetailView(RetrieveAPIView):
     lookup_field = "pk"
 
     def get_queryset(self):
-        return User.objects.all()
+        return User.objects.filter(role="customer")

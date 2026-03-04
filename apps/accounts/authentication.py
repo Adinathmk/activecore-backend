@@ -12,7 +12,7 @@ class CookieJWTAuthentication(JWTAuthentication):
         try:
             validated_token = self.get_validated_token(access)
         except (InvalidToken, TokenError):
-            return None   # Ignore invalid tokens for public endpoints
+            return None  
 
         user = self.get_user(validated_token)
 

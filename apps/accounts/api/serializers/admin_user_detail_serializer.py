@@ -15,6 +15,7 @@ class AdminUserDetailSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
+            "phone_number",   # ✅ added
             "role",
             "is_verified",
             "status",
