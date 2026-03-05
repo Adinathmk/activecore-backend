@@ -69,7 +69,7 @@ class OrderService:
 
     @staticmethod
     @transaction.atomic
-    def _create_order_from_items(user, items, shipping_address, billing_address,payment_method):
+    def _create_order_from_items(user, items, shipping_address, billing_address, payment_method):
 
         subtotal = Decimal("0.00")
         order_items_data = []
@@ -82,16 +82,15 @@ class OrderService:
             inventory = variant.inventory
             product = variant.product
             quantity = entry["quantity"]
-            
 
             if inventory.available_stock < quantity:
                 raise ValidationError(
                     f"{product.name} ({variant.size}) is out of stock"
                 )
 
-            # 🔥 Reserve stock
-            inventory.reserved += quantity
-            inventory.save(update_fields=["reserved"])
+            # ✅ Deduct stock directly
+            inventory.stock -= quantity
+            inventory.save(update_fields=["stock"])
 
             unit_price = variant.price
             discount_percent = variant.discount_percent
@@ -218,9 +217,9 @@ class OrderService:
             items=items,
             shipping_address=shipping_address,
             billing_address=billing_address,
-            payment_method=payment_method            
+            payment_method=payment_method
         )
-    
+
 
     # ----------------------------------------------------------------------
     # CANCEL ORDER (MANUAL)
@@ -260,8 +259,9 @@ class OrderService:
             )
 
             inventory = variant.inventory
-            inventory.reserved = max(0, inventory.reserved - item.quantity)
-            inventory.save(update_fields=["reserved"])
+            # ✅ Restore stock directly
+            inventory.stock += item.quantity
+            inventory.save(update_fields=["stock"])
 
     # ----------------------------------------------------------------------
     # AUTO CANCEL EXPIRED ORDERS
@@ -306,7 +306,7 @@ class OrderService:
             order.save(update_fields=["status", "is_paid"])
 
 
-        # -------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
     @staticmethod
     @transaction.atomic
@@ -432,14 +432,9 @@ class StripeService:
 
         if not order_id:
             return
-        
-        if order.status != OrderStatus.PENDING:
-            return
 
         order = Order.objects.select_for_update().get(id=order_id)
 
-        # If already processed → ignore
-        
         # Only allow failure if still pending
         if order.status != OrderStatus.PENDING:
             return
