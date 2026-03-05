@@ -12,6 +12,7 @@ from .views.admin.admin_user_detail import AdminUserDetailView
 from .views.admin.admin_user_search import AdminUserSearchByNameView
 from .views.public.me_view import MeView
 from .views.public.otp_view import VerifyOTPView,SendOTPView,ResetPasswordView,ForgotPasswordView
+from .views.public.google_auth import GoogleAuthView
 
 app_name = "accounts"
 
@@ -22,6 +23,7 @@ urlpatterns = [
     path("register/", RegisterView.as_view(), name="auth-register"),
     path("forgot-password/", ForgotPasswordView.as_view()),
     path("reset-password/", ResetPasswordView.as_view()),
+    path("google/", GoogleAuthView.as_view()),
 
 
     
