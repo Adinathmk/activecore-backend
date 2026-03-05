@@ -56,5 +56,8 @@ urlpatterns = [
     path(
         "api/orders/",include(("apps.orders.api.urls", "orders"), namespace="orders"),
     ),
+    path(
+        "api/reports/",include(("apps.reports.api.urls", "reports"), namespace="reports"),
+    ),
     
 ]

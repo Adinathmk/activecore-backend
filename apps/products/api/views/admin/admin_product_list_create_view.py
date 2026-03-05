@@ -10,10 +10,11 @@ from apps.products.models import Product
 from apps.products.api.serializers.product_create_serializer import ProductCreateSerializer
 from apps.products.api.serializers.admin_product_list_serializer import AdminProductListSerializer
 from apps.products.api.serializers.admin_product_detail_serializer import AdminProductDetailSerializer
-
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class AdminProductListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
 
 
     def get_serializer_class(self):
@@ -50,13 +51,37 @@ class AdminProductListCreateAPIView(ListCreateAPIView):
 
         return queryset
 
-    
     def create(self, request, *args, **kwargs):
-        serializer = ProductCreateSerializer(data=request.data)
+        from apps.products.utils import parse_multipart_data
+        
+        parsed_data = parse_multipart_data(request.data)
+        
+        # If images were sent as files, attach them to the parsed array
+        images_data = parsed_data.get("images", [])
+        if not isinstance(images_data, list):
+            images_data = []
+
+        # Map uploaded files into the 'images' array if any matches
+        for key, file in request.FILES.items():
+            if key.startswith("images[") and key.endswith("][image]"):
+                try:
+                    # Extract index e.g., images[0][image] -> 0
+                    index_str = key.split("[")[1].split("]")[0]
+                    index = int(index_str)
+                    
+                    # Ensure the array is large enough
+                    while len(images_data) <= index:
+                        images_data.append({})
+                        
+                    images_data[index]["image"] = file
+                except (IndexError, ValueError):
+                    pass
+        
+        parsed_data["images"] = images_data
+        
+        serializer = self.get_serializer(data=parsed_data)
         serializer.is_valid(raise_exception=True)
         product = serializer.save()
-
-        
         response_serializer = AdminProductDetailSerializer(product)
 
         return Response(

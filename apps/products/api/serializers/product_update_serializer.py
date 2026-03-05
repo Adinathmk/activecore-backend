@@ -23,7 +23,9 @@ class VariantUpdateSerializer(serializers.Serializer):
 
 
 class ImageUpdateSerializer(serializers.Serializer):
-    image_url = serializers.URLField()
+    id = serializers.IntegerField(required=False, allow_null=True)
+    image = serializers.FileField(required=False, allow_null=True)
+    image_url = serializers.URLField(required=False, allow_null=True)
     is_primary = serializers.BooleanField(default=False)
     is_secondary = serializers.BooleanField(default=False)
 
@@ -107,16 +109,35 @@ class ProductFullUpdateSerializer(serializers.ModelSerializer):
         # -------------------------
 
         if images_data is not None:
-            instance.images.all().delete()
+            # We want to keep existing images if they have an ID and no new 'image' file
+            # and delete those not sent + create new ones
+            
+            existing_image_ids = [img["id"] for img in images_data if img.get("id")]
+            instance.images.exclude(id__in=existing_image_ids).delete()
 
-            for index, image in enumerate(images_data):
-                ProductImage.objects.create(
-                    product=instance,
-                    image_url=image["image_url"],
-                    is_primary=image.get("is_primary", False),
-                    is_secondary=image.get("is_secondary", False),
-                    order=index
-                )
+            for index, img_data in enumerate(images_data):
+                if img_data.get("id"):
+                    # Update existing image layout
+                    try:
+                        img_obj = instance.images.get(id=img_data["id"])
+                        img_obj.is_primary = img_data.get("is_primary", False)
+                        img_obj.is_secondary = img_data.get("is_secondary", False)
+                        img_obj.order = index
+                        if img_data.get("image"):
+                            img_obj.image = img_data["image"]
+                        img_obj.save()
+                    except ProductImage.DoesNotExist:
+                        pass
+                else:
+                    # Create new image
+                    if img_data.get("image"):
+                        ProductImage.objects.create(
+                            product=instance,
+                            image=img_data["image"],
+                            is_primary=img_data.get("is_primary", False),
+                            is_secondary=img_data.get("is_secondary", False),
+                            order=index
+                        )
 
         # -------------------------
         # UPDATE FEATURES

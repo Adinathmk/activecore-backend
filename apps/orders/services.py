@@ -55,11 +55,11 @@ class OrderService:
     def _get_primary_image(product):
         primary = product.images.filter(is_primary=True).first()
         if primary:
-            return primary.image_url
+            return primary.image.url if primary.image else ""
 
         first_image = product.images.first()
         if first_image:
-            return first_image.image_url
+            return first_image.image.url if first_image.image else ""
 
         return ""
 

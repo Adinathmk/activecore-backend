@@ -2,6 +2,8 @@ from django.db import models
 from .mixins import SlugMixin
 import uuid
 from django.db.models import Q
+from cloudinary.models import CloudinaryField
+from django.db.models import Q
 
 
 class Category(SlugMixin):
@@ -78,37 +80,59 @@ class ProductFeature(models.Model):
 
 #------------------------------------------------------------------------
 
+
+
+
+
 class ProductImage(models.Model):
+
     product = models.ForeignKey(
-        Product,
+        "Product",
         related_name="images",
         on_delete=models.CASCADE
     )
-    image_url = models.URLField()
+
+    image = CloudinaryField(
+        "product_image",
+        folder="products"
+    )
+
+    alt_text = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
     is_primary = models.BooleanField(default=False)
     is_secondary = models.BooleanField(default=False)
+
     order = models.PositiveSmallIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["order"]
+
         constraints = [
             models.UniqueConstraint(
                 fields=["product"],
-                condition=models.Q(is_primary=True),
+                condition=Q(is_primary=True),
                 name="one_primary_image_per_product",
             ),
+
             models.UniqueConstraint(
                 fields=["product"],
                 condition=Q(is_secondary=True),
                 name="one_secondary_image_per_product",
             ),
+
             models.CheckConstraint(
                 condition=~(Q(is_primary=True) & Q(is_secondary=True)),
-                name="image_not_both_primary_and_secondary",
+                name="image_not_primary_and_secondary"
             )
-
         ]
 
+    def __str__(self):
+        return f"{self.product.name} image"
 
 #--------------------------------------------------------------
 

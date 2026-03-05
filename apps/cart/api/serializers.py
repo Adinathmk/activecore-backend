@@ -30,7 +30,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     def get_product_image(self, obj):
         image = obj.variant.product.images.filter(is_primary=True).first()
-        return image.image_url if image else None
+        return image.image.url if image and image.image else None
     
 
 

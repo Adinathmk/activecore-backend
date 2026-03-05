@@ -23,8 +23,8 @@ class FeaturedProductSerializer(serializers.ModelSerializer):
 
     def get_primary_image(self, obj):
         image = next((img for img in obj.images.all() if img.is_primary), None)
-        return image.image_url if image else None
+        return image.image.url if image and image.image else None
 
     def get_secondary_image(self, obj):
         image = next((img for img in obj.images.all() if img.is_secondary), None)
-        return image.image_url if image else None
+        return image.image.url if image and image.image else None

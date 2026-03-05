@@ -60,15 +60,23 @@ class AdminVariantDetailSerializer(serializers.ModelSerializer):
 
 
 class AdminProductImageSerializer(serializers.ModelSerializer):
+
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
         fields = (
             "id",
-            "image_url",
+            "image",
             "is_primary",
             "is_secondary",
             "order",
         )
+
+    def get_image(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
 
 

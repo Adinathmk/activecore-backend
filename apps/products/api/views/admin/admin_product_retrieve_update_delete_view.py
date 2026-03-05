@@ -59,10 +59,29 @@ class AdminProductRetrieveUpdateDeleteAPIView(APIView):
     def patch(self, request, pk):
         product = self.get_object(pk)
 
-       
+        from apps.products.utils import parse_multipart_data
+        parsed_data = parse_multipart_data(request.data)
+        
+        # Merge uploaded files into parsed_data images
+        images_data = parsed_data.get("images", [])
+        if not isinstance(images_data, list):
+            images_data = []
+
+        for key, file in request.FILES.items():
+            if key.startswith("images[") and key.endswith("][image]"):
+                try:
+                    index = int(key.split("[")[1].split("]")[0])
+                    while len(images_data) <= index:
+                        images_data.append({})
+                    images_data[index]["image"] = file
+                except (IndexError, ValueError):
+                    pass
+        
+        parsed_data["images"] = images_data
+
         write_serializer = ProductFullUpdateSerializer(
             product,
-            data=request.data,
+            data=parsed_data,
             partial=True
         )
         write_serializer.is_valid(raise_exception=True)

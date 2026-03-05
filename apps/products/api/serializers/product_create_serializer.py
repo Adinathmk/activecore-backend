@@ -23,11 +23,16 @@ class VariantCreateSerializer(serializers.Serializer):
     stock = serializers.IntegerField(min_value=0)
 
 
-class ImageCreateSerializer(serializers.Serializer):
-    image_url = serializers.URLField()
-    is_primary = serializers.BooleanField(default=False)
-    is_secondary = serializers.BooleanField(default=False)
+class ImageCreateSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = ProductImage
+        fields = [
+            "image",
+            "alt_text",
+            "is_primary",
+            "is_secondary",
+        ]
 
 class ProductCreateSerializer(serializers.ModelSerializer):
     images = ImageCreateSerializer(many=True)
@@ -66,11 +71,14 @@ class ProductCreateSerializer(serializers.ModelSerializer):
   
 
     def validate_images(self, value):
+
         primary_count = sum(1 for img in value if img.get("is_primary"))
+
         if primary_count != 1:
             raise serializers.ValidationError(
                 "Exactly one primary image is required."
             )
+
         return value
 
 
@@ -98,12 +106,13 @@ class ProductCreateSerializer(serializers.ModelSerializer):
         ProductMetrics.objects.create(product=product)
 
 
-        for index, image in enumerate(images_data):
+        for index, images_data in enumerate(images_data):
             ProductImage.objects.create(
                 product=product,
-                image_url=image["image_url"],
-                is_primary=image.get("is_primary", False),
-                is_secondary=image.get("is_secondary", False),
+                image=images_data["image"],
+                alt_text=images_data.get("alt_text", ""),
+                is_primary=images_data.get("is_primary", False),
+                is_secondary=images_data.get("is_secondary", False),
                 order=index
             )
 
