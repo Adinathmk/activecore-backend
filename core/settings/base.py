@@ -22,6 +22,9 @@ AUTH_USER_MODEL = "accounts.User"
 
 # Application definition
 INSTALLED_APPS = [
+    "daphne",  
+    "channels",
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +43,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
 
 
-
+    'apps.notifications.apps.NotificationsConfig',
     'apps.accounts.apps.AccountsConfig',
     'apps.products.apps.ProductsConfig',
     'apps.wishlist.apps.WishlistConfig',
@@ -72,6 +75,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'core.urls'
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = "core.asgi.application"
 
 TEMPLATES = [
     {
@@ -125,7 +129,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 
     "ROTATE_REFRESH_TOKENS": True,
@@ -187,3 +191,10 @@ TWILIO_WHATSAPP_NUMBER = env("TWILIO_WHATSAPP_NUMBER")
 
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
