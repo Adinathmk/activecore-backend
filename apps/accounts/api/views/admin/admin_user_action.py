@@ -2,6 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+import logging
+
+logger = logging.getLogger(__name__)
 
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
@@ -46,6 +49,9 @@ class AdminUserBlockToggleView(APIView):
         user.is_active = not user.is_active
         user.save(update_fields=["is_active"])
 
+        action = "Blocked" if not user.is_active else "Unblocked"
+        logger.info(f"Admin {request.user.email} (ID: {request.user.id}) {action} user {user.email} (ID: {user.id})")
+
         return Response({
             "status": "Active" if user.is_active else "Blocked"
         })
@@ -80,5 +86,8 @@ class AdminUserDeleteView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        user_email = user.email
+        user_id = user.id
         user.delete()
+        logger.info(f"Admin {request.user.email} (ID: {request.user.id}) deleted user {user_email} (ID: {user_id})")
         return Response(status=status.HTTP_204_NO_CONTENT)

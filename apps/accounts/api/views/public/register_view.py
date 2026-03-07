@@ -5,6 +5,9 @@ from rest_framework.permissions import AllowAny
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
 from apps.accounts.api.serializers.register_serializer import RegisterSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -21,7 +24,8 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer.save()
+        user = serializer.save()
+        logger.info(f"New user registered: {user.email} (ID: {user.id})")
 
         return Response(
             {

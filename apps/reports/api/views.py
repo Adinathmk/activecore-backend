@@ -2,6 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count
+import logging
+
+logger = logging.getLogger(__name__)
 
 from apps.accounts.models import User
 from apps.products.models import Product
@@ -12,7 +15,10 @@ class DashboardMetricsView(APIView):
 
     def get(self, request):
         if request.user.role != User.Role.ADMIN:
+            logger.warning(f"Unauthorized access attempt to dashboard metrics by user {request.user.id}")
             return Response({"detail": "You do not have permission to perform this action."}, status=403)
+
+        logger.info(f"Dashboard metrics requested by user {request.user.id}")
 
         # Basic Counts
         total_users = User.objects.filter(role=User.Role.CUSTOMER).count()
@@ -46,7 +52,8 @@ class DashboardMetricsView(APIView):
                 product = Product.objects.get(id=real_product_id)
                 cat_name = product.category.name
                 type_name = product.product_type.name
-            except (Product.DoesNotExist, AttributeError, ValueError):
+            except (Product.DoesNotExist, AttributeError, ValueError) as e:
+                logger.error(f"Failed to find product info for OrderItem {item.id}: {e}")
                 cat_name = "Unknown"
                 type_name = "Unknown"
             

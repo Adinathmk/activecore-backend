@@ -33,6 +33,7 @@ def send_whatsapp_otp(phone_number, otp):
             from_=settings.TWILIO_WHATSAPP_NUMBER,
             to=f"whatsapp:{phone_number}"
         )
+        logger.info(f"WhatsApp OTP sent to {phone_number}. SID: {message.sid}")
         return message.sid
     except Exception as e:
         logger.error(f"WhatsApp OTP failed: {str(e)}")
@@ -61,6 +62,7 @@ def send_email_otp(user, otp, subject, heading):
 
     email.attach_alternative(html_content, "text/html")
     email.send()
+    logger.info(f"Email OTP '{subject}' sent to {user.email}")
 
 
 # ==============================

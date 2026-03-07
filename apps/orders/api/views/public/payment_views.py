@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
+import logging
+
+logger = logging.getLogger(__name__)
 
 from drf_spectacular.utils import (
     extend_schema,
@@ -56,6 +59,7 @@ class CreatePaymentIntentView(APIView):
 
         try:
             intent = StripeService.create_payment_intent(order)
+            logger.info(f"Payment intent created for Order {order.id} by User {request.user.id}")
 
         except ValidationError as e:
             # Handles COD, expired, already processed etc.

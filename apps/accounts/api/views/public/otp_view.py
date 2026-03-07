@@ -13,6 +13,9 @@ from ....models import UserOTP
 from ...serializers.otp_serializer import VerifyOTPSerializer,SendOTPSerializer,ForgotPasswordSerializer,ResetPasswordSerializer
 from ....utils import create_and_send_otp
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 User = get_user_model()
@@ -47,6 +50,7 @@ class SendOTPView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
+            logger.warning(f"OTP request for non-existent email: {email}")
             return Response({"error": "User not found"}, status=404)
 
         if user.is_verified:
@@ -57,6 +61,7 @@ class SendOTPView(APIView):
 
         # ✅ Always email
         create_and_send_otp(user, otp_type="verify", channel="email")
+        logger.info(f"Verification OTP sent to {email}")
 
         return Response(
             {"message": "Verification OTP sent via email"},
@@ -115,6 +120,7 @@ class VerifyOTPView(APIView):
             return Response({"error": "OTP expired"}, status=400)
 
         if otp_obj.attempts >= 5:
+            logger.warning(f"Too many OTP verification attempts for user: {email}")
             otp_obj.delete()
             return Response({"error": "Too many attempts"}, status=400)
 
@@ -125,6 +131,7 @@ class VerifyOTPView(APIView):
 
         user.is_verified = True
         user.save()
+        logger.info(f"User {email} verified successfully via OTP.")
 
         otp_obj.is_used = True
         otp_obj.save()
@@ -192,6 +199,7 @@ class ForgotPasswordView(APIView):
             otp_type="reset",
             channel=channel
         )
+        logger.info(f"Password reset OTP sent to {email} via {channel}")
 
         return Response(
             {"message": f"Reset OTP sent via {channel}"},
@@ -255,6 +263,7 @@ class ResetPasswordView(APIView):
 
         user.set_password(new_password)
         user.save()
+        logger.info(f"Password reset successful for user {email}")
 
         for token in OutstandingToken.objects.filter(user=user):
             BlacklistedToken.objects.get_or_create(token=token)

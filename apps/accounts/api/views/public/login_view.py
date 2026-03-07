@@ -5,6 +5,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from apps.accounts.api.serializers.login_serializer import LoginSerializer
 from apps.accounts.api.serializers.user_serializer import UserSerializer
+import logging
+
+logger = logging.getLogger(__name__)
 
 from drf_spectacular.utils import extend_schema
 
@@ -26,6 +29,8 @@ class LoginView(APIView):
         refresh = RefreshToken.for_user(user)
 
         refresh["role"] = user.role
+
+        logger.info(f"User {user.email} (ID: {user.id}) logged in successfully.")
 
         response = Response({
             "user": UserSerializer(user).data

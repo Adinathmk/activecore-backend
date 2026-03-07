@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser
+import logging
+
+logger = logging.getLogger(__name__)
 
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
@@ -39,6 +42,7 @@ class AdminOrderStatusUpdateView(APIView):
                 new_status=serializer.validated_data["new_status"],
                 changed_by=request.user,
             )
+            logger.info(f"Admin {request.user.email} (ID: {request.user.id}) updated Order {order.id} status to {order.status}")
         except ValueError as e:
             return Response(
                 {"detail": str(e)},

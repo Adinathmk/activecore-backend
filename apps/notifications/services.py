@@ -1,6 +1,9 @@
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import Notification
 
@@ -25,7 +28,7 @@ def notify_user(user, message):
             "message": message
         }
     )
-    print(f"Notification Service: Message sent to group layer.")
+    logger.info(f"Real-time notification sent to User {user.id}")
 
 
 def notify_all_users(message):

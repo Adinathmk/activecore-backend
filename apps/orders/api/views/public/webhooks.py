@@ -31,9 +31,11 @@ def stripe_webhook(request):
     payment_intent = event["data"]["object"]
 
     if event_type == "payment_intent.succeeded":
+        logger.info(f"Stripe payment success: {payment_intent['id']}")
         StripeService.handle_payment_success(payment_intent)
 
     elif event_type == "payment_intent.payment_failed":
+        logger.warning(f"Stripe payment failure: {payment_intent['id']} - Reason: {payment_intent.get('last_payment_error', {}).get('message')}")
         StripeService.handle_payment_failed(payment_intent)
 
     return HttpResponse(status=200)
