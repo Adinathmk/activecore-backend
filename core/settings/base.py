@@ -3,37 +3,55 @@ from datetime import timedelta
 import environ
 import stripe
 
-# Base Directory
+# --------------------------------------------------
+# BASE DIRECTORY
+# --------------------------------------------------
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Initialize environment
-env = environ.Env()
+# --------------------------------------------------
+# ENVIRONMENT VARIABLES
+# --------------------------------------------------
 
-# Load .env file
+env = environ.Env()
 environ.Env.read_env(BASE_DIR / ".env")
 
+# --------------------------------------------------
 # SECURITY
+# --------------------------------------------------
+
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool("DEBUG", default=False)
+
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+
+# --------------------------------------------------
+# DJANGO CORE
+# --------------------------------------------------
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 
-# Application definition
+# --------------------------------------------------
+# APPLICATIONS
+# --------------------------------------------------
+
 INSTALLED_APPS = [
-    "daphne",  
+
+    # ASGI / WebSocket
+    "daphne",
     "channels",
 
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+    # Django
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 
-
-    'drf_spectacular',
+    # Third party
+    "drf_spectacular",
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
@@ -42,16 +60,118 @@ INSTALLED_APPS = [
     "cloudinary",
     "cloudinary_storage",
 
-
-    'apps.notifications.apps.NotificationsConfig',
-    'apps.accounts.apps.AccountsConfig',
-    'apps.products.apps.ProductsConfig',
-    'apps.wishlist.apps.WishlistConfig',
-    'apps.cart.apps.CartConfig',
-    'apps.orders.apps.OrdersConfig',
-    'apps.reports.apps.ReportsConfig',
-
+    # Local apps
+    "apps.notifications",
+    "apps.accounts",
+    "apps.products",
+    "apps.wishlist",
+    "apps.cart",
+    "apps.orders",
+    "apps.reports",
 ]
+
+# --------------------------------------------------
+# MIDDLEWARE
+# --------------------------------------------------
+
+MIDDLEWARE = [
+
+    "corsheaders.middleware.CorsMiddleware",
+
+    "django.middleware.security.SecurityMiddleware",
+
+    "django.contrib.sessions.middleware.SessionMiddleware",
+
+    "django.middleware.common.CommonMiddleware",
+
+    "django.middleware.csrf.CsrfViewMiddleware",
+
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    "django.contrib.messages.middleware.MessageMiddleware",
+
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+# --------------------------------------------------
+# URL / ASGI
+# --------------------------------------------------
+
+ROOT_URLCONF = "core.urls"
+
+WSGI_APPLICATION = "core.wsgi.application"
+
+ASGI_APPLICATION = "core.asgi.application"
+
+# --------------------------------------------------
+# TEMPLATES
+# --------------------------------------------------
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+
+                "django.template.context_processors.request",
+
+                "django.contrib.auth.context_processors.auth",
+
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+# --------------------------------------------------
+# DATABASE
+# --------------------------------------------------
+
+DATABASES = {
+    "default": env.db()
+}
+
+# --------------------------------------------------
+# PASSWORD VALIDATION
+# --------------------------------------------------
+
+AUTH_PASSWORD_VALIDATORS = [
+
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+# --------------------------------------------------
+# INTERNATIONALIZATION
+# --------------------------------------------------
+
+LANGUAGE_CODE = "en-us"
+
+TIME_ZONE = "UTC"
+
+USE_I18N = True
+
+USE_TZ = True
+
+# --------------------------------------------------
+# STATIC FILES
+# --------------------------------------------------
+
+STATIC_URL = "/static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+# --------------------------------------------------
+# CLOUDINARY STORAGE
+# --------------------------------------------------
 
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
@@ -60,183 +180,192 @@ CLOUDINARY_STORAGE = {
     "API_KEY": env("CLOUDINARY_API_KEY"),
     "API_SECRET": env("CLOUDINARY_API_SECRET"),
 }
-MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",   
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
 
+# --------------------------------------------------
+# DJANGO REST FRAMEWORK
+# --------------------------------------------------
 
-
-ROOT_URLCONF = 'core.urls'
-WSGI_APPLICATION = 'core.wsgi.application'
-ASGI_APPLICATION = "core.asgi.application"
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-# Database
-DATABASES = {
-    "default": env.db()
-}
-
-# Password validation
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
-
-# Internationalization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
-
-# Static files
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / "staticfiles"
-
-
-
-#Rest framework
 REST_FRAMEWORK = {
+
     "DEFAULT_PAGINATION_CLASS": "apps.common.pagination.StandardResultsPagination",
+
     "PAGE_SIZE": 12,
+
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "apps.accounts.authentication.CookieJWTAuthentication",
     ),
-    "DEFAULT_THROTTLE_RATES": { "anon": "5/minute",}
+
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "5/minute"
+    }
 }
 
+# --------------------------------------------------
+# JWT SETTINGS
+# --------------------------------------------------
+
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 
     "ROTATE_REFRESH_TOKENS": True,
+
     "BLACKLIST_AFTER_ROTATION": True,
 
     "AUTH_HEADER_TYPES": ("Bearer",),
+
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 
     "UPDATE_LAST_LOGIN": True,
 }
 
+# --------------------------------------------------
+# API DOCS
+# --------------------------------------------------
+
 SPECTACULAR_SETTINGS = {
-    "TITLE": "My Project API",
-    "DESCRIPTION": "API documentation for my backend",
+
+    "TITLE": "Ecommerce API",
+
+    "DESCRIPTION": "Backend API",
+
     "VERSION": "1.0.0",
 
-    # Swagger UI behavior
     "SERVE_INCLUDE_SCHEMA": False,
 
-    # Enable JWT (Bearer) auth in Swagger
     "SECURITY": [{"BearerAuth": []}],
+
     "COMPONENT_SPLIT_REQUEST": True,
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# --------------------------------------------------
+# CORS / CSRF
+# --------------------------------------------------
+
+CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-]
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
-
-
-# Email Configuration (SMTP)
+# --------------------------------------------------
+# EMAIL
+# --------------------------------------------------
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 EMAIL_HOST = env("EMAIL_HOST")
+
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
+# --------------------------------------------------
+# STRIPE
+# --------------------------------------------------
+
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+
 stripe.api_key = STRIPE_SECRET_KEY
 
+# --------------------------------------------------
+# TWILIO
+# --------------------------------------------------
 
 TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID")
+
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN")
+
 TWILIO_WHATSAPP_NUMBER = env("TWILIO_WHATSAPP_NUMBER")
 
+# --------------------------------------------------
+# GOOGLE AUTH
+# --------------------------------------------------
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 
+# --------------------------------------------------
+# CHANNELS
+# --------------------------------------------------
 
 CHANNEL_LAYERS = {
+
     "default": {
+
         "BACKEND": "channels.layers.InMemoryChannelLayer",
-    },
+    }
 }
 
+# --------------------------------------------------
+# LOGGING
+# --------------------------------------------------
+
 LOGS_DIR = BASE_DIR / "logs"
+
 LOGS_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
+
     "version": 1,
+
     "disable_existing_loggers": False,
+
     "formatters": {
+
         "verbose": {
+
             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+
             "style": "{",
         },
+
         "simple": {
+
             "format": "{levelname} {message}",
+
             "style": "{",
         },
     },
+
     "handlers": {
+
         "console": {
+
             "class": "logging.StreamHandler",
+
             "formatter": "simple",
         },
+
         "file": {
+
             "class": "logging.handlers.RotatingFileHandler",
+
             "filename": LOGS_DIR / "django.log",
-            "maxBytes": 1024 * 1024 * 5,  # 5 MB
+
+            "maxBytes": 1024 * 1024 * 5,
+
             "backupCount": 5,
+
             "formatter": "verbose",
         },
     },
+
     "root": {
+
         "handlers": ["console", "file"],
+
         "level": "INFO",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
     },
 }
