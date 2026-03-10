@@ -1,35 +1,31 @@
 name: Deploy Django Backend
 
 on:
-  push:
-    branches: [ main ]
+push:
+branches:
+- main
 
 jobs:
-  deploy:
 
-    runs-on: ubuntu-latest
+deploy:
 
-    steps:
+runs-on: ubuntu-latest
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+steps:
 
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ubuntu
-          key: ${{ secrets.SSH_KEY }}
+- name: Deploy to EC2
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.SERVER_IP }}
+    username: ubuntu
+    key: ${{ secrets.SSH_KEY }}
 
-          script: |
-            cd activecore-backend
+    script: |
+      cd /home/ubuntu/activecore-backend
+      git pull origin main
+      source venv/bin/activate
+      pip install -r requirements.txt
+      python manage.py migrate
+      python manage.py collectstatic --noinput
+      sudo systemctl restart daphne
 
-            git pull origin main
-
-            source venv/bin/activate
-
-            pip install -r requirements.txt
-
-            python manage.py migrate
-
-            python manage.py collectstatic --noinput
-
-            sudo systemctl restart daphne
