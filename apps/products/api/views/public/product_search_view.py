@@ -27,7 +27,7 @@ class ProductSearchAPIView(APIView):
         if not query:
             return Response([], status=status.HTTP_200_OK)
 
-        # Safety limit (prevent abuse)
+        
         limit = min(limit, 20)
 
         queryset = (

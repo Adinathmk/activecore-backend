@@ -56,20 +56,20 @@ class AdminProductListCreateAPIView(ListCreateAPIView):
         
         parsed_data = parse_multipart_data(request.data)
         
-        # If images were sent as files, attach them to the parsed array
+        
         images_data = parsed_data.get("images", [])
         if not isinstance(images_data, list):
             images_data = []
 
-        # Map uploaded files into the 'images' array if any matches
+        
         for key, file in request.FILES.items():
             if key.startswith("images[") and key.endswith("][image]"):
                 try:
-                    # Extract index e.g., images[0][image] -> 0
+                    
                     index_str = key.split("[")[1].split("]")[0]
                     index = int(index_str)
                     
-                    # Ensure the array is large enough
+                    
                     while len(images_data) <= index:
                         images_data.append({})
                         

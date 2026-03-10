@@ -15,13 +15,13 @@ class JWTAuthMiddleware(BaseMiddleware):
         query_string = scope["query_string"].decode()
         query_params = parse_qs(query_string)
         
-        # 1. Try to get token from query params
+        
         token = None
         query_token = query_params.get("token")
         if query_token:
             token = query_token[0].strip()
         
-        # 2. If token is invalid/missing, try to get from cookies
+       
         if not token or token == "undefined":
             headers = dict(scope.get("headers", []))
             cookie_bytes = headers.get(b"cookie", b"")
@@ -34,12 +34,12 @@ class JWTAuthMiddleware(BaseMiddleware):
                         print("WebSocket Auth: Using token from cookie")
                         break
 
-        # 3. Validate the token if we found one
+       
         if token and token != "undefined":
             if token.startswith('Bearer '):
                 token = token[7:]
             
-            # Use safe length for logging
+           
             t_len = len(token)
             t_start = token[:10] if t_len > 10 else token
             t_end = token[-10:] if t_len > 10 else ""

@@ -8,7 +8,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
         user = self.scope.get("user")
 
-        # If authenticated → join personal group
+       
         if user and user.is_authenticated:
             self.group_name = f"user_{user.id}"
             print(f"WebSocket Consumer: Joining group '{self.group_name}' for user {user.email}")
@@ -23,7 +23,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             print(f"WebSocket connected for user {user.email} on channel {self.channel_name}")
 
         else:
-            # Reject anonymous users to prevent unauthorized access
+           
             user_info = f"User: {user}" if user else "No user in scope"
             print(f"WebSocket rejected: {user_info}")
             await self.close()

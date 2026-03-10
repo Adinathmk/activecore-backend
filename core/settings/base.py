@@ -133,6 +133,8 @@ DATABASES = {
     "default": env.db()
 }
 
+DATABASES["default"]["CONN_MAX_AGE"] = 60
+
 # --------------------------------------------------
 # PASSWORD VALIDATION
 # --------------------------------------------------
@@ -168,6 +170,7 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"
 
 # --------------------------------------------------
 # CLOUDINARY STORAGE
@@ -277,6 +280,8 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
 
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+
+STRIPE_PUBLISHABLE_KEY = env("STRIPE_PUBLISHABLE_KEY")
 
 stripe.api_key = STRIPE_SECRET_KEY
 

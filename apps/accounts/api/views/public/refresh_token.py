@@ -79,8 +79,8 @@ class RefreshView(APIView):
             "access",
             str(new_refresh.access_token),
             httponly=True,
-            secure=not settings.DEBUG,            # must be False on localhost
-            samesite="Lax",            # ✅ NOT Strict
+            secure=not settings.DEBUG,           
+            samesite="Lax",           
             path="/",
         )
 
@@ -88,8 +88,8 @@ class RefreshView(APIView):
             "refresh",
             str(new_refresh),
             httponly=True,
-            secure=not settings.DEBUG,              # must be False on localhost
-            samesite="Lax",            # ✅ NOT Strict
+            secure=not settings.DEBUG,           
+            samesite="Lax",          
             path="/",
         )
 

@@ -62,7 +62,7 @@ class CreatePaymentIntentView(APIView):
             logger.info(f"Payment intent created for Order {order.id} by User {request.user.id}")
 
         except ValidationError as e:
-            # Handles COD, expired, already processed etc.
+            
             error_message = (
                 e.detail[0] if hasattr(e, "detail") else str(e)
             )

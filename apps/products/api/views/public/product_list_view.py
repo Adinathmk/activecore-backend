@@ -34,9 +34,6 @@ class ProductListAPIView(APIView):
     )
     def get(self, request):
 
-        # --------------------------------------------------
-        # Base Query
-        # --------------------------------------------------
         queryset = (
             Product.objects
             .filter(is_active=True)
@@ -57,24 +54,18 @@ class ProductListAPIView(APIView):
 
         params = request.query_params
 
-        # --------------------------------------------------
-        # Category Filter
-        # --------------------------------------------------
+     
         if category := params.get("category"):
             queryset = queryset.filter(category__slug__iexact=category)
 
-        # --------------------------------------------------
-        # Size Filter
-        # --------------------------------------------------
+       
         if size := params.get("size"):
             queryset = queryset.filter(
                 variants__size__iexact=size,
                 variants__is_active=True,
             ).distinct()
 
-        # --------------------------------------------------
-        # Price Filter (DB Level)
-        # --------------------------------------------------
+    
         min_price = params.get("min_price")
         max_price = params.get("max_price")
 
@@ -104,9 +95,6 @@ class ProductListAPIView(APIView):
 
             queryset = queryset.distinct()
 
-        # --------------------------------------------------
-        # Sorting
-        # --------------------------------------------------
         sort = params.get("sort")
 
         if sort == "newest":
@@ -134,9 +122,6 @@ class ProductListAPIView(APIView):
             else:
                 queryset = queryset.order_by("-min_price")
 
-        # --------------------------------------------------
-        # Wishlist & Cart
-        # --------------------------------------------------
         if request.user.is_authenticated:
 
             wishlist_variant_ids = set(
@@ -155,9 +140,7 @@ class ProductListAPIView(APIView):
             wishlist_variant_ids = set()
             cart_variant_ids = set()
 
-        # --------------------------------------------------
-        # Pagination
-        # --------------------------------------------------
+   
         paginator = StandardResultsPagination()
 
         paginated_queryset = paginator.paginate_queryset(
@@ -166,9 +149,6 @@ class ProductListAPIView(APIView):
             view=self
         )
 
-        # --------------------------------------------------
-        # Serialize
-        # --------------------------------------------------
         serializer = ProductListSerializer(
             paginated_queryset,
             many=True,

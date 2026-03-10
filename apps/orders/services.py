@@ -88,7 +88,7 @@ class OrderService:
                     f"{product.name} ({variant.size}) is out of stock"
                 )
 
-            # ✅ Deduct stock directly
+          
             inventory.stock -= quantity
             inventory.save(update_fields=["stock"])
 
@@ -123,7 +123,7 @@ class OrderService:
 
         total = subtotal + tax + shipping - discount
 
-        # 🔥 Create order
+        
         order = Order.objects.create(
             user=user,
             subtotal_amount=subtotal,
@@ -139,11 +139,11 @@ class OrderService:
             is_paid=False,
         )
 
-        # ✅ COD LOGIC
+        
         if payment_method == PaymentMethod.COD:
             order.status = OrderStatus.CONFIRMED
             order.is_paid = False
-            order.expires_at = None  # COD should not expire
+            order.expires_at = None  
             order.save(update_fields=["status", "is_paid", "expires_at"])
 
         for item in order_items_data:
@@ -259,7 +259,7 @@ class OrderService:
             )
 
             inventory = variant.inventory
-            # ✅ Restore stock directly
+           
             inventory.stock += item.quantity
             inventory.save(update_fields=["stock"])
 
@@ -286,7 +286,7 @@ class OrderService:
 
         for order in expired_orders:
 
-            # Cancel Stripe PaymentIntent (only for ONLINE)
+           
             if order.payment_method == PaymentMethod.ONLINE and hasattr(order, "payment"):
                 try:
                     stripe.PaymentIntent.cancel(
