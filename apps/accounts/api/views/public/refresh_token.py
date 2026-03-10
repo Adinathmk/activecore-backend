@@ -80,7 +80,7 @@ class RefreshView(APIView):
             str(new_refresh.access_token),
             httponly=True,
             secure=not settings.DEBUG,           
-            samesite="Lax",           
+            samesite="None",           
             path="/",
         )
 
@@ -89,7 +89,7 @@ class RefreshView(APIView):
             str(new_refresh),
             httponly=True,
             secure=not settings.DEBUG,           
-            samesite="Lax",          
+            samesite="None",          
             path="/",
         )
 

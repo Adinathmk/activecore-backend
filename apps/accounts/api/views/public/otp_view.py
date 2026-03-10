@@ -149,7 +149,7 @@ class VerifyOTPView(APIView):
             value=str(access_token),
             httponly=True,
             secure=False,  # True in production
-            samesite="Lax",
+            samesite="None",
         )
 
         response.set_cookie(
@@ -157,7 +157,7 @@ class VerifyOTPView(APIView):
             value=str(refresh),
             httponly=True,
             secure=False,
-            samesite="Lax",
+            samesite="None",
         )
 
         return response

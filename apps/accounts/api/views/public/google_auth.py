@@ -56,7 +56,7 @@ class GoogleAuthView(APIView):
                 str(refresh.access_token),
                 httponly=True,
                 secure=not settings.DEBUG,
-                samesite="Lax",
+                samesite="None",
                 path="/",
             )
 
@@ -65,7 +65,7 @@ class GoogleAuthView(APIView):
                 str(refresh),
                 httponly=True,
                 secure=not settings.DEBUG,
-                samesite="Lax",
+                samesite="None",
                 path="/",
             )
 

@@ -31,12 +31,12 @@ class LogoutView(APIView):
         response.delete_cookie(
             "access",
             path="/",
-            samesite="Lax",
+            samesite="None",
         )
         response.delete_cookie(
             "refresh",
             path="/",
-            samesite="Lax",
+            samesite="None",
         )
 
         return response
