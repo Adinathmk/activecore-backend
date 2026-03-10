@@ -40,7 +40,7 @@ class LoginView(APIView):
             "access",
             str(refresh.access_token),
             httponly=True,
-            secure=not settings.DEBUG,
+            secure=True,
             samesite="None",
             path="/",
         )
@@ -49,7 +49,7 @@ class LoginView(APIView):
             "refresh",
             str(refresh),
             httponly=True,
-            secure=not settings.DEBUG,
+            secure=True,
             samesite="None",
             path="/",
         )
