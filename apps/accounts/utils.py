@@ -116,32 +116,30 @@ REFRESH_COOKIE_NAME = "refresh"
 
 
 def set_auth_cookies(response, access_token, refresh_token):
-    """
-    Attach access and refresh tokens as secure HTTP-only cookies.
-    """
 
     response.set_cookie(
-        key=ACCESS_COOKIE_NAME,
+        key="access",
         value=access_token,
         httponly=True,
-        secure=not settings.DEBUG,
+        secure=True,
         samesite="None",
         path="/",
-        max_age=900,  # 15 min
+        max_age=900,
+        domain=None,  # important
     )
 
     response.set_cookie(
-        key=REFRESH_COOKIE_NAME,
+        key="refresh",
         value=refresh_token,
         httponly=True,
-        secure=not settings.DEBUG,
+        secure=True,
         samesite="None",
         path="/",
-        max_age=604800,  # 7 days
+        max_age=604800,
+        domain=None,
     )
 
     return response
-
 
 def clear_auth_cookies(response):
     """
