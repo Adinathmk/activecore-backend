@@ -106,3 +106,58 @@ def create_and_send_otp(user, otp_type="verify", channel="email"):
 
     else:
         raise ValueError("Invalid OTP channel")
+
+
+
+from django.conf import settings
+
+ACCESS_COOKIE_NAME = "access"
+REFRESH_COOKIE_NAME = "refresh"
+
+
+def set_auth_cookies(response, access_token, refresh_token):
+    """
+    Attach access and refresh tokens as secure HTTP-only cookies.
+    """
+
+    response.set_cookie(
+        key=ACCESS_COOKIE_NAME,
+        value=access_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="None",
+        path="/",
+        max_age=900,  # 15 min
+    )
+
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="None",
+        path="/",
+        max_age=604800,  # 7 days
+    )
+
+    return response
+
+
+def clear_auth_cookies(response):
+    """
+    Remove auth cookies.
+    """
+
+    response.delete_cookie(
+        ACCESS_COOKIE_NAME,
+        path="/",
+        samesite="None"
+    )
+
+    response.delete_cookie(
+        REFRESH_COOKIE_NAME,
+        path="/",
+        samesite="None"
+    )
+
+    return response

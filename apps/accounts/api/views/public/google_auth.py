@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.api.serializers.user_serializer import UserSerializer
+from apps.accounts.utils import set_auth_cookies
 
 User = get_user_model()
 
@@ -51,22 +52,10 @@ class GoogleAuthView(APIView):
                 "user": UserSerializer(user).data
             })
 
-            response.set_cookie(
-                "access",
+            set_auth_cookies(
+                response,
                 str(refresh.access_token),
-                httponly=True,
-                secure=not settings.DEBUG,
-                samesite="None",
-                path="/",
-            )
-
-            response.set_cookie(
-                "refresh",
-                str(refresh),
-                httponly=True,
-                secure=not settings.DEBUG,
-                samesite="None",
-                path="/",
+                str(refresh)
             )
 
             return response

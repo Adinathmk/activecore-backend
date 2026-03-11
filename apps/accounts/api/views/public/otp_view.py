@@ -15,6 +15,9 @@ from ....utils import create_and_send_otp
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 import logging
 
+
+from apps.accounts.utils import set_auth_cookies
+
 logger = logging.getLogger(__name__)
 
 
@@ -144,20 +147,10 @@ class VerifyOTPView(APIView):
             status=200
         )
 
-        response.set_cookie(
-            key="access_token",
-            value=str(access_token),
-            httponly=True,
-            secure=False,  # True in production
-            samesite="None",
-        )
-
-        response.set_cookie(
-            key="refresh_token",
-            value=str(refresh),
-            httponly=True,
-            secure=False,
-            samesite="None",
+        set_auth_cookies(
+            response,
+            str(access_token),
+            str(refresh)
         )
 
         return response

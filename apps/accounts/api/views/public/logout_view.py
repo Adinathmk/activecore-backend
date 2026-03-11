@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.conf import settings
 from drf_spectacular.utils import extend_schema
+from apps.accounts.utils import clear_auth_cookies
 
 class LogoutView(APIView):
     permission_classes = [AllowAny]
@@ -28,15 +29,6 @@ class LogoutView(APIView):
 
         response = Response({"detail": "Logged out successfully"})
 
-        response.delete_cookie(
-            "access",
-            path="/",
-            samesite="None",
-        )
-        response.delete_cookie(
-            "refresh",
-            path="/",
-            samesite="None",
-        )
+        clear_auth_cookies(response)
 
         return response

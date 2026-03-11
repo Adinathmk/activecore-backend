@@ -6,6 +6,7 @@ from rest_framework.permissions import AllowAny
 from apps.accounts.api.serializers.login_serializer import LoginSerializer
 from apps.accounts.api.serializers.user_serializer import UserSerializer
 import logging
+from apps.accounts.utils import set_auth_cookies
 
 logger = logging.getLogger(__name__)
 
@@ -36,23 +37,9 @@ class LoginView(APIView):
             "user": UserSerializer(user).data
         })
 
-        response.set_cookie(
-            "access",
+        set_auth_cookies(
+            response,
             str(refresh.access_token),
-            httponly=True,
-            secure=True,
-            samesite="None",
-            path="/",
-            max_age=900, 
-        )
-
-        response.set_cookie(
-            "refresh",
-            str(refresh),
-            httponly=True,
-            secure=True,
-            samesite="None",
-            path="/",
-             max_age=604800,
+            str(refresh)
         )
         return response

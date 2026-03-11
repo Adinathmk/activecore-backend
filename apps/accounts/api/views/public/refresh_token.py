@@ -10,6 +10,7 @@ from datetime import datetime
 from django.utils.timezone import make_aware
 from drf_spectacular.utils import extend_schema
 from apps.accounts.api.serializers.cookie_refresh_serializer import CookieRefreshSerializer
+from apps.accounts.utils import set_auth_cookies
 
 User = get_user_model()
 
@@ -75,22 +76,10 @@ class RefreshView(APIView):
 
         response = Response({"detail": "Token refreshed"})
 
-        response.set_cookie(
-            "access",
+        set_auth_cookies(
+            response,
             str(new_refresh.access_token),
-            httponly=True,
-            secure=not settings.DEBUG,           
-            samesite="None",           
-            path="/",
-        )
-
-        response.set_cookie(
-            "refresh",
-            str(new_refresh),
-            httponly=True,
-            secure=not settings.DEBUG,           
-            samesite="None",          
-            path="/",
+            str(new_refresh)
         )
 
         return response
