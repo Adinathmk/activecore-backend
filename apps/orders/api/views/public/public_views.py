@@ -57,7 +57,7 @@ class CheckoutView(APIView):
                     user=request.user,
                     shipping_address=serializer.validated_data["shipping_address"],
                     billing_address=serializer.validated_data["billing_address"],
-                    payment_method=payment_method,  # ✅ FIXED
+                    payment_method=payment_method,  
                 )
 
         except ValidationError as e:
