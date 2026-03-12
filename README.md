@@ -19,11 +19,6 @@
 
 ActiveCore is a full-featured, production-ready **REST API backend** for a premium workout wear e-commerce platform. Built with Django and Django REST Framework, it handles everything from authentication and product management to real-time order notifications and Stripe-powered payments — deployed on AWS EC2 with automated CI/CD.
 
-### 🌐 Live API
-> **`https://activecore.duckdns.org`** — Served via Daphne (ASGI) + Nginx with full SSL
-
----
-
 ## ✨ Features
 
 ### 🔐 Authentication & Users
