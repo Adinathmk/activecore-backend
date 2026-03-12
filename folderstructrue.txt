@@ -1,0 +1,229 @@
+activecore-backend/
+├── manage.py
+├── requirements.txt
+├── .env.example
+├── apps/
+│   ├── __init__.py
+│   ├── accounts/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── authentication.py
+│   │   ├── managers.py
+│   │   ├── middleware.py
+│   │   ├── models.py
+│   │   ├── permissions.py
+│   │   ├── tests.py
+│   │   ├── utils.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── urls.py
+│   │   │   ├── serializers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── admin_user_detail_serializer.py
+│   │   │   │   ├── admin_user_list_serializer.py
+│   │   │   │   ├── cookie_refresh_serializer.py
+│   │   │   │   ├── login_serializer.py
+│   │   │   │   ├── otp_serializer.py
+│   │   │   │   ├── profile_serializer.py
+│   │   │   │   ├── register_serializer.py
+│   │   │   │   └── user_serializer.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       ├── admin/
+│   │   │       │   ├── __init__.py
+│   │   │       │   ├── admin_user_action.py
+│   │   │       │   ├── admin_user_detail.py
+│   │   │       │   ├── admin_user_list.py
+│   │   │       │   └── admin_user_search.py
+│   │   │       └── public/
+│   │   │           ├── __init__.py
+│   │   │           ├── google_auth.py
+│   │   │           ├── login_view.py
+│   │   │           ├── logout_view.py
+│   │   │           ├── me_view.py
+│   │   │           ├── otp_view.py
+│   │   │           ├── refresh_token.py
+│   │   │           └── register_view.py
+│   │   ├── middleware/
+│   │   │   ├── __init__.py
+│   │   │   └── jwt_websocket_auth.py
+│   │   └── migrations/
+│   │       ├── 0001_initial.py
+│   │       ├── 0002_userotp_delete_emailotp.py
+│   │       ├── 0003_alter_user_phone_number.py
+│   │       └── __init__.py
+│   ├── cart/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── services.py
+│   │   ├── signals.py
+│   │   ├── tests.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── serializers.py
+│   │   │   ├── urls.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       ├── cart_meta_views.py
+│   │   │       ├── cart_read_views.py
+│   │   │       ├── cart_validation_views.py
+│   │   │       └── cart_write_views.py
+│   │   └── migrations/
+│   │       ├── 0001_initial.py
+│   │       └── __init__.py
+│   ├── common/
+│   │   ├── __init__.py
+│   │   └── pagination.py
+│   ├── notifications/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── consumers.py
+│   │   ├── models.py
+│   │   ├── routing.py
+│   │   ├── services.py
+│   │   ├── tests.py
+│   │   ├── api/
+│   │   │   ├── urls.py
+│   │   │   └── views.py
+│   │   └── migrations/
+│   │       ├── 0001_initial.py
+│   │       └── __init__.py
+│   ├── orders/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── models.py
+│   │   ├── services.py
+│   │   ├── tests.py
+│   │   ├── api/
+│   │   │   ├── __init__.py
+│   │   │   ├── serializers.py
+│   │   │   ├── urls.py
+│   │   │   ├── views.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       ├── admin/
+│   │   │       │   ├── __init__.py
+│   │   │       │   ├── admin_order_detail_view.py
+│   │   │       │   ├── admin_order_list_view.py
+│   │   │       │   ├── admin_order_search_view.py
+│   │   │       │   ├── admin_order_stats_view.py
+│   │   │       │   └── admin_views_update.py
+│   │   │       └── public/
+│   │   │           ├── __init__.py
+│   │   │           ├── payment_views.py
+│   │   │           ├── public_views.py
+│   │   │           └── webhooks.py
+│   │   ├── management/
+│   │   │   ├── __init__.py
+│   │   │   └── commands/
+│   │   │       ├── __init__.py
+│   │   │       └── cancel_expired_orders.py
+│   │   └── migrations/
+│   │       ├── 0001_initial.py
+│   │       ├── 0002_payment.py
+│   │       ├── 0003_order_expires_at.py
+│   │       ├── 0004_order_is_paid_order_payment_method.py
+│   │       └── __init__.py
+│   ├── products/
+│   │   ├── __init__.py
+│   │   ├── admin.py
+│   │   ├── apps.py
+│   │   ├── mixins.py
+│   │   ├── models.py
+│   │   ├── signals.py
+│   │   ├── tests.py
+│   │   ├── utils.py
+│   │   ├── api/
+│   │   │   ├── __init.py
+│   │   │   ├── urls.py
+│   │   │   ├── serializers/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── admin_product_detail_serializer.py
+│   │   │   │   ├── admin_product_list_serializer.py
+│   │   │   │   ├── admin_variant_serializer.py
+│   │   │   │   ├── category_serializer.py
+│   │   │   │   ├── featured_product_serializer.py
+│   │   │   │   ├── product_create_serializer.py
+│   │   │   │   ├── product_detail_serializer.py
+│   │   │   │   ├── product_feature_serializer.py
+│   │   │   │   ├── product_image_serializer.py
+│   │   │   │   ├── product_list_serializer.py
+│   │   │   │   ├── product_rating_create_serializer.py
+│   │   │   │   ├── product_type_serializer.py
+│   │   │   │   ├── product_update_serializer.py
+│   │   │   │   └── product_variant_serializer.py
+│   │   │   └── views/
+│   │   │       ├── __init__.py
+│   │   │       ├── admin/
+│   │   │       │   ├── __init__.py
+│   │   │       │   ├── admin_category_create_view.py
+│   │   │       │   ├── admin_product_list_create_view.py
+│   │   │       │   ├── admin_product_retrieve_update_delete_view.py
+│   │   │       │   ├── admin_product_search_view.py
+│   │   │       │   ├── admin_product_type_create_view.py
+│   │   │       │   ├── admin_variant_list_create_view.py
+│   │   │       │   └── admin_variant_retrieve_update_delete_view.py
+│   │   │       └── public/
+│   │   │           ├── __init__.py
+│   │   │           ├── featured_product_list_view.py
+│   │   │           ├── product_detail_view.py
+│   │   │           ├── product_list_view.py
+│   │   │           ├── product_rating_view.py
+│   │   │           └── product_search_view.py
+│   │   └── migrations/
+│   │       ├── 0001_initial.py
+│   │       ├── 0002_alter_category_name_alter_product_name_and_more.py
+│   │       ├── 0003_alter_productvariant_size.py
+│   │       ├── 0004_remove_productimage_image_url_productimage_image.py
+│   │       ├── 0005_remove_productimage_image_not_both_primary_and_secondary_and_more.py
+│   │       └── __init__.py
+│   ├── reports/
+│   │   ├── __init__.py
+│   │   ├── apps.py
+│   │   └── api/
+│   │       ├── __init__.py
+│   │       ├── urls.py
+│   │       └── views.py
+│   └── wishlist/
+│       ├── __init__.py
+│       ├── admin.py
+│       ├── apps.py
+│       ├── models.py
+│       ├── signals.py
+│       ├── tests.py
+│       ├── api/
+│       │   ├── __init__.py
+│       │   ├── serializers.py
+│       │   ├── urls.py
+│       │   └── views/
+│       │       ├── __init__.py
+│       │       ├── wishlist_cart_views.py
+│       │       ├── wishlist_item_views.py
+│       │       ├── wishlist_meta_views.py
+│       │       └── wishlist_views.py
+│       └── migrations/
+│           ├── 0001_initial.py
+│           └── __init__.py
+├── core/
+│   ├── __init__.py
+│   ├── asgi.py
+│   ├── pricing.py
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── settings/
+│       ├── __init__.py
+│       ├── base.py
+│       ├── dev.py
+│       └── prod.py
+├── deploy/
+│   ├── daphne.service
+│   ├── deploy.sh
+│   └── nginx.conf
+└── .github/
+    └── workflows/
+        └── deploy.yml
