@@ -14,7 +14,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 
 
-# combine websocket routes
+# combine websocket route
 websocket_urlpatterns = notification_ws + chat_ws
 
 
