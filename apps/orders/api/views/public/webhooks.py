@@ -8,6 +8,11 @@ from ....services import StripeService
 
 logger = logging.getLogger(__name__)
 
+# 
+# Use this cli command for  development
+# 
+# stripe listen --forward-to localhost:8000/api/orders/payments/webhook/
+# 
 
 @csrf_exempt
 def stripe_webhook(request):
